@@ -6,11 +6,11 @@ if [[ "$(which gox)X" == "X" ]]; then
 fi
 
 
-rm -f Diego-Enabler*
+rm -f diego-enabler*
 
 gox -os linux -os windows -arch 386
 gox -os darwin -os linux -os windows -arch amd64
 
 rm -rf out
 mkdir -p out
-mv Diego-Enabler* out/
+mv diego-enabler* out/

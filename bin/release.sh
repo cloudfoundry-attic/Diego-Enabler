@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export GH_ORG=${GH_ORG:-simonleung8}
-export GH_REPO=${GH_REPO:-Diego-Enabler}
+export GH_REPO=${GH_REPO:-diego-enabler}
 export NAME=${NAME:-"Diego Enabler"}
 export DESCRIPTION=${DESCRIPTION:-"Turn on Diego runtime support for application"}
 export PKG_DIR=${PKG_DIR:=out}
