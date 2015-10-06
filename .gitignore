@@ -1,3 +1,4 @@
 main
 .DS_Store
 *.tar.gz
+out/
