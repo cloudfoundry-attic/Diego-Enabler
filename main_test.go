@@ -8,7 +8,7 @@ import (
 	"github.com/cloudfoundry/cli/testhelpers/rpc_server"
 	fake_rpc_handlers "github.com/cloudfoundry/cli/testhelpers/rpc_server/fakes"
 
-	. "github.com/simonleung8/diego-enabler"
+	. "github.com/cloudfoundry-incubator/diego-enabler"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

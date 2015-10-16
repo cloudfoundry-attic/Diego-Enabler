@@ -5,7 +5,7 @@ import (
 
 	"github.com/cloudfoundry/cli/plugin/fakes"
 
-	"github.com/simonleung8/diego-enabler/diego_support"
+	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

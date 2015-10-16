@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GH_ORG=${GH_ORG:-simonleung8}
+export GH_ORG=${GH_ORG:cloudfoundry-incubator}
 export GH_REPO=${GH_REPO:-diego-enabler}
 export NAME=${NAME:-"Diego Enabler"}
 export DESCRIPTION=${DESCRIPTION:-"Turn on Diego runtime support for application"}
