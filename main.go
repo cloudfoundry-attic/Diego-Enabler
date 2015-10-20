@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cloudfoundry/cli/plugin"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
+	"github.com/cloudfoundry/cli/plugin"
 )
 
 type DiegoEnabler struct{}
@@ -71,7 +71,7 @@ func (c *DiegoEnabler) showUsage(args []string) {
 func (c *DiegoEnabler) toggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName string) {
 	d := diego_support.NewDiegoSupport(cliConnection)
 
-	fmt.Printf("Setting %s Deigo support to %t\n", appName, on)
+	fmt.Printf("Setting %s Diego support to %t\n", appName, on)
 	app, err := cliConnection.GetApp(appName)
 	if err != nil {
 		exitWithError(err, []string{})
@@ -83,7 +83,7 @@ func (c *DiegoEnabler) toggleDiegoSupport(on bool, cliConnection plugin.CliConne
 	}
 	sayOk()
 
-	fmt.Printf("Verifying %s Deigo support is set to %t\n", appName, on)
+	fmt.Printf("Verifying %s Diego support is set to %t\n", appName, on)
 	app, err = cliConnection.GetApp(appName)
 	if err != nil {
 		exitWithError(err, []string{})

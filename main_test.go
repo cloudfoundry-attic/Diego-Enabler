@@ -95,7 +95,7 @@ var _ = Describe("DiegoEnabler", func() {
 				Ω(rpcHandlers.GetAppCallCount()).To(Equal(2))
 			})
 
-			It("sets deigo flag with /v2/apps endpoint", func() {
+			It("sets diego flag with /v2/apps endpoint", func() {
 				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
 					*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
 					return nil
@@ -138,7 +138,7 @@ var _ = Describe("DiegoEnabler", func() {
 
 				session.Wait()
 
-				Ω(session).To(gbytes.Say("Verifying test-app Deigo support is set to true"))
+				Ω(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
 				Ω(session).To(gbytes.Say("Ok"))
 				Ω(session.ExitCode()).To(Equal(0))
 			})
@@ -154,7 +154,7 @@ var _ = Describe("DiegoEnabler", func() {
 
 				session.Wait()
 
-				Ω(session).To(gbytes.Say("Verifying test-app Deigo support is set to true"))
+				Ω(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
 				Ω(session).To(gbytes.Say("FAILED"))
 				Ω(session.ExitCode()).To(Equal(1))
 			})
@@ -176,7 +176,7 @@ var _ = Describe("DiegoEnabler", func() {
 				Ω(session).To(gbytes.Say("Invalid Usage"))
 			})
 
-			It("sets deigo flag with /v2/apps endpoint", func() {
+			It("sets diego flag with /v2/apps endpoint", func() {
 				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
 					*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
 					return nil
