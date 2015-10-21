@@ -1,7 +1,8 @@
 #!/bin/bash
 
-export GH_ORG=${GH_ORG:cloudfoundry-incubator}
-export GH_REPO=${GH_REPO:-diego-enabler}
+export GH_ORG=${GH_ORG:-cloudfoundry-incubator}
+export GH_REPO=${GH_REPO:-Diego-Enabler}
+export BINARY_PREFIX=${BINARY_PREFIX:-diego-enabler}
 export NAME=${NAME:-"Diego Enabler"}
 export DESCRIPTION=${DESCRIPTION:-"Turn on Diego runtime support for application"}
 export PKG_DIR=${PKG_DIR:=out}
@@ -14,7 +15,7 @@ if [[ "$(which github-release)X" == "X" ]]; then
 fi
 
 
-echo "Creating tagged release v${VERSION} of $GH_ORG/$GH_REPO."
+echo "Creating tagged release v${VERSION} of $GH_ORG/$GH_REPO"
 read -n1 -r -p "Ok to proceed? (Ctrl-C to cancel)..." key
 
 github-release release \
@@ -25,7 +26,7 @@ github-release release \
 
 os_arches=( darwin_amd64 linux_386 linux_amd64 windows_386 windows_amd64 )
 for os_arch in "${os_arches[@]}"; do
-  asset=$(ls ${PKG_DIR}/${GH_REPO}_${os_arch}* | head -n 1)
+  asset=$(ls ${PKG_DIR}/${BINARY_PREFIX}_${os_arch}* | head -n 1)
   filename="${asset##*/}"
 
   echo "Uploading $filename..."
