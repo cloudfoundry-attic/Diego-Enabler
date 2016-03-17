@@ -79,7 +79,7 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				session.Wait()
-				Ω(session).To(gbytes.Say("Invalid Usage"))
+				Expect(session).To(gbytes.Say("Invalid Usage"))
 			})
 
 			It("calls GetApp() twice, one to get app guid, another to verify flag is set", func() {
@@ -92,7 +92,7 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				session.Wait()
-				Ω(rpcHandlers.GetAppCallCount()).To(Equal(2))
+				Expect(rpcHandlers.GetAppCallCount()).To(Equal(2))
 			})
 
 			It("sets diego flag with /v2/apps endpoint", func() {
@@ -105,11 +105,11 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				session.Wait()
-				Ω(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
+				Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
 
 				output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
-				Ω(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
-				Ω(output[5]).To(ContainSubstring(`"diego":true`))
+				Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
+				Expect(output[5]).To(ContainSubstring(`"diego":true`))
 			})
 
 			It("exits with error when GetApp() returns error", func() {
@@ -123,8 +123,8 @@ var _ = Describe("DiegoEnabler", func() {
 
 				session.Wait()
 
-				Ω(session).To(gbytes.Say("error in GetApp"))
-				Ω(session.ExitCode()).To(Equal(1))
+				Expect(session).To(gbytes.Say("error in GetApp"))
+				Expect(session.ExitCode()).To(Equal(1))
 			})
 
 			It("exit 0 after veriftying the flag is correct set", func() {
@@ -138,9 +138,9 @@ var _ = Describe("DiegoEnabler", func() {
 
 				session.Wait()
 
-				Ω(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
-				Ω(session).To(gbytes.Say("Ok"))
-				Ω(session.ExitCode()).To(Equal(0))
+				Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
+				Expect(session).To(gbytes.Say("Ok"))
+				Expect(session.ExitCode()).To(Equal(0))
 			})
 
 			It("exit 1 after veriftying the flag is not correct set", func() {
@@ -154,9 +154,9 @@ var _ = Describe("DiegoEnabler", func() {
 
 				session.Wait()
 
-				Ω(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
-				Ω(session).To(gbytes.Say("FAILED"))
-				Ω(session.ExitCode()).To(Equal(1))
+				Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
+				Expect(session).To(gbytes.Say("FAILED"))
+				Expect(session.ExitCode()).To(Equal(1))
 			})
 		})
 
@@ -173,7 +173,7 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				session.Wait()
-				Ω(session).To(gbytes.Say("Invalid Usage"))
+				Expect(session).To(gbytes.Say("Invalid Usage"))
 			})
 
 			It("sets diego flag with /v2/apps endpoint", func() {
@@ -186,11 +186,11 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				session.Wait()
-				Ω(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
+				Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
 
 				output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
-				Ω(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
-				Ω(output[5]).To(ContainSubstring(`"diego":false`))
+				Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
+				Expect(output[5]).To(ContainSubstring(`"diego":false`))
 			})
 
 			Context("has-diego-enabled", func() {
@@ -206,7 +206,7 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					session.Wait()
-					Ω(session).To(gbytes.Say("Invalid Usage"))
+					Expect(session).To(gbytes.Say("Invalid Usage"))
 				})
 
 				It("calls GetApp() to get app model", func() {
@@ -219,7 +219,7 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					session.Wait()
-					Ω(rpcHandlers.GetAppCallCount()).To(Equal(1))
+					Expect(rpcHandlers.GetAppCallCount()).To(Equal(1))
 				})
 
 				It("notifies user app is not found when app does not exist", func() {
@@ -232,8 +232,8 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					session.Wait()
-					Ω(session).To(gbytes.Say("App test-app not found"))
-					Ω(session.ExitCode()).To(Equal(1))
+					Expect(session).To(gbytes.Say("App test-app not found"))
+					Expect(session.ExitCode()).To(Equal(1))
 				})
 
 				It("outpus the app's Diego flag value", func() {
@@ -246,8 +246,8 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					session.Wait()
-					Ω(session).To(gbytes.Say("true"))
-					Ω(session.ExitCode()).To(Equal(0))
+					Expect(session).To(gbytes.Say("true"))
+					Expect(session.ExitCode()).To(Equal(0))
 				})
 
 			})
