@@ -42,12 +42,9 @@ var _ = Describe("DiegoEnabler", func() {
 
 		BeforeEach(func() {
 			rpcHandlers = &fake_rpc_handlers.FakeHandlers{}
-			ts, err = test_rpc_server.NewTestRpcServer(rpcHandlers)
-			Expect(err).NotTo(HaveOccurred())
+		})
 
-			err = ts.Start()
-			Expect(err).NotTo(HaveOccurred())
-
+		JustBeforeEach(func() {
 			//set rpc.CallCoreCommand to a successful call
 			rpcHandlers.CallCoreCommandStub = func(_ []string, retVal *bool) error {
 				*retVal = true
@@ -60,6 +57,12 @@ var _ = Describe("DiegoEnabler", func() {
 				return nil
 			}
 
+			ts, err = test_rpc_server.NewTestRpcServer(rpcHandlers)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = ts.Start()
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 
 		AfterEach(func() {
@@ -69,7 +72,7 @@ var _ = Describe("DiegoEnabler", func() {
 		Context("enable-diego", func() {
 			var args []string
 
-			BeforeEach(func() {
+			JustBeforeEach(func() {
 				args = []string{ts.Port(), "enable-diego", "test-app"}
 			})
 
@@ -82,88 +85,108 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(session).To(gbytes.Say("Invalid Usage"))
 			})
 
-			It("calls GetApp() twice, one to get app guid, another to verify flag is set", func() {
-				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-					*retVal = plugin_models.GetAppModel{}
-					return nil
-				}
+			Context("when the args are properly provided", func() {
+				BeforeEach(func() {
+					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+						*retVal = plugin_models.GetAppModel{}
+						return nil
+					}
+				})
 
-				session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
+				It("calls GetApp() twice, one to get app guid, another to verify flag is set", func() {
+					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
 
-				session.Wait()
-				Expect(rpcHandlers.GetAppCallCount()).To(Equal(2))
+					session.Wait()
+					Expect(rpcHandlers.GetAppCallCount()).To(Equal(2))
+				})
 			})
 
-			It("sets diego flag with /v2/apps endpoint", func() {
-				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-					*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
-					return nil
-				}
+			Context("when the app is found", func() {
+				BeforeEach(func() {
+					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+						*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
+						return nil
+					}
+				})
 
-				session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
+				It("sets diego flag with /v2/apps endpoint", func() {
+					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
 
-				session.Wait()
-				Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
+					session.Wait()
+					Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
 
-				output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
-				Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
-				Expect(output[5]).To(ContainSubstring(`"diego":true`))
+					output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
+					Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
+					Expect(output[5]).To(ContainSubstring(`"diego":true`))
+				})
 			})
 
-			It("exits with error when GetApp() returns error", func() {
-				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-					*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
-					return errors.New("error in GetApp")
-				}
+			Context("when the app is not found", func() {
+				BeforeEach(func() {
+					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+						*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
+						return errors.New("error in GetApp")
+					}
+				})
 
-				session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
+				It("exits with error when GetApp() returns error", func() {
+					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
 
-				session.Wait()
+					session.Wait()
 
-				Expect(session).To(gbytes.Say("error in GetApp"))
-				Expect(session.ExitCode()).To(Equal(1))
+					Expect(session).To(gbytes.Say("error in GetApp"))
+					Expect(session.ExitCode()).To(Equal(1))
+				})
 			})
 
-			It("exit 0 after veriftying the flag is correct set", func() {
-				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-					*retVal = plugin_models.GetAppModel{Guid: "test-app-guid", Diego: true}
-					return nil
-				}
+			Context("when the app was successfully changed to Diego", func() {
+				BeforeEach(func() {
+					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+						*retVal = plugin_models.GetAppModel{Guid: "test-app-guid", Diego: true}
+						return nil
+					}
+				})
 
-				session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
+				It("exit 0 after veriftying the flag is correct set", func() {
+					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
 
-				session.Wait()
+					session.Wait()
 
-				Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
-				Expect(session).To(gbytes.Say("Ok"))
-				Expect(session.ExitCode()).To(Equal(0))
+					Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
+					Expect(session).To(gbytes.Say("Ok"))
+					Expect(session.ExitCode()).To(Equal(0))
+				})
 			})
 
-			It("exit 1 after veriftying the flag is not correct set", func() {
-				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-					*retVal = plugin_models.GetAppModel{Guid: "test-app-guid", Diego: false}
-					return nil
-				}
+			Context("when the change to Diego failed", func() {
+				BeforeEach(func() {
+					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+						*retVal = plugin_models.GetAppModel{Guid: "test-app-guid", Diego: false}
+						return nil
+					}
+				})
 
-				session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
+				It("exit 1 after veriftying the flag is not correct set", func() {
+					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
 
-				session.Wait()
+					session.Wait()
 
-				Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
-				Expect(session).To(gbytes.Say("FAILED"))
-				Expect(session.ExitCode()).To(Equal(1))
+					Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
+					Expect(session).To(gbytes.Say("FAILED"))
+					Expect(session.ExitCode()).To(Equal(1))
+				})
 			})
 		})
 
 		Context("disable-diego", func() {
 			var args []string
 
-			BeforeEach(func() {
+			JustBeforeEach(func() {
 				args = []string{ts.Port(), "disable-diego", "test-app"}
 			})
 
@@ -176,27 +199,31 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(session).To(gbytes.Say("Invalid Usage"))
 			})
 
-			It("sets diego flag with /v2/apps endpoint", func() {
-				rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-					*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
-					return nil
-				}
+			Context("when the app is found", func() {
+				BeforeEach(func() {
+					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+						*retVal = plugin_models.GetAppModel{Guid: "test-app-guid"}
+						return nil
+					}
+				})
 
-				session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-				Expect(err).NotTo(HaveOccurred())
+				It("sets diego flag with /v2/apps endpoint", func() {
+					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
 
-				session.Wait()
-				Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
+					session.Wait()
+					Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
 
-				output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
-				Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
-				Expect(output[5]).To(ContainSubstring(`"diego":false`))
+					output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
+					Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
+					Expect(output[5]).To(ContainSubstring(`"diego":false`))
+				})
 			})
 
 			Context("has-diego-enabled", func() {
 				var args []string
 
-				BeforeEach(func() {
+				JustBeforeEach(func() {
 					args = []string{ts.Port(), "has-diego-enabled", "test-app"}
 				})
 
@@ -209,45 +236,58 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(session).To(gbytes.Say("Invalid Usage"))
 				})
 
-				It("calls GetApp() to get app model", func() {
-					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-						*retVal = plugin_models.GetAppModel{}
-						return nil
-					}
+				Context("when the params are properly provided", func() {
+					BeforeEach(func() {
+						rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+							*retVal = plugin_models.GetAppModel{}
+							return nil
+						}
+					})
 
-					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
+					It("calls GetApp() to get app model", func() {
 
-					session.Wait()
-					Expect(rpcHandlers.GetAppCallCount()).To(Equal(1))
+						session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+						Expect(err).NotTo(HaveOccurred())
+
+						session.Wait()
+						Expect(rpcHandlers.GetAppCallCount()).To(Equal(1))
+					})
 				})
 
-				It("notifies user app is not found when app does not exist", func() {
-					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-						*retVal = plugin_models.GetAppModel{Guid: ""}
-						return nil
-					}
+				Context("when the app does not exist", func() {
+					BeforeEach(func() {
+						rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+							*retVal = plugin_models.GetAppModel{Guid: ""}
+							return nil
+						}
+					})
 
-					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
+					It("notifies user app is not found", func() {
+						session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+						Expect(err).NotTo(HaveOccurred())
 
-					session.Wait()
-					Expect(session).To(gbytes.Say("App test-app not found"))
-					Expect(session.ExitCode()).To(Equal(1))
+						session.Wait()
+						Expect(session).To(gbytes.Say("App test-app not found"))
+						Expect(session.ExitCode()).To(Equal(1))
+					})
 				})
 
-				It("outpus the app's Diego flag value", func() {
-					rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
-						*retVal = plugin_models.GetAppModel{Guid: "test-app-guid", Diego: true}
-						return nil
-					}
+				Context("when the app is on Diego", func() {
+					BeforeEach(func() {
+						rpcHandlers.GetAppStub = func(_ string, retVal *plugin_models.GetAppModel) error {
+							*retVal = plugin_models.GetAppModel{Guid: "test-app-guid", Diego: true}
+							return nil
+						}
+					})
 
-					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
-					Expect(err).NotTo(HaveOccurred())
+					It("outputs the app's Diego flag value", func() {
+						session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+						Expect(err).NotTo(HaveOccurred())
 
-					session.Wait()
-					Expect(session).To(gbytes.Say("true"))
-					Expect(session.ExitCode()).To(Equal(0))
+						session.Wait()
+						Expect(session).To(gbytes.Say("true"))
+						Expect(session.ExitCode()).To(Equal(0))
+					})
 				})
 
 			})

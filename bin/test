@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ginkgo -r -p -race $@
