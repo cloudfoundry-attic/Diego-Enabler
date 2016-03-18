@@ -12,7 +12,7 @@ var NotLoggedInError = errors.New("You must be logged in")
 
 //go:generate counterfeiter . RequestFactory
 type RequestFactory interface {
-	NewGetAppsRequest(api.Filters, map[string]interface{}) (*http.Request, error)
+	NewGetAppsRequest(api.Filter, map[string]interface{}) (*http.Request, error)
 }
 
 //go:generate counterfeiter . CloudControllerClient
@@ -43,16 +43,14 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 		return noApps, err
 	}
 
-	filters := api.Filters{
-		api.EqualFilter{
-			Name:  "diego",
-			Value: true,
-		},
+	filter := api.EqualFilter{
+		Name:  "diego",
+		Value: true,
 	}
 
 	params := map[string]interface{}{}
 
-	req, err := factory.NewGetAppsRequest(filters, params)
+	req, err := factory.NewGetAppsRequest(filter, params)
 	if err != nil {
 		return noApps, err
 	}
@@ -79,7 +77,7 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 	for page := 2; page <= paginatedRes.TotalPages; page++ {
 		// construct a new request with the current page
 		params["page"] = page
-		req, err := factory.NewGetAppsRequest(filters, params)
+		req, err := factory.NewGetAppsRequest(filter, params)
 		if err != nil {
 			return noApps, err
 		}

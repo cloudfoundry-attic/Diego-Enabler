@@ -72,11 +72,9 @@ var _ = Describe("DiegoApps", func() {
 			})
 
 			It("should create a request", func() {
-				expectedFilters := api.Filters{
-					api.EqualFilter{
-						Name:  "diego",
-						Value: true,
-					},
+				expectedFilters := api.EqualFilter{
+					Name:  "diego",
+					Value: true,
 				}
 
 				Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
