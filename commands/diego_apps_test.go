@@ -3,6 +3,7 @@ package commands_test
 import (
 	"errors"
 
+	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/fakes"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
@@ -17,6 +18,7 @@ var _ = Describe("DiegoApps", func() {
 	var fakeRequestFactory *fakes.FakeRequestFactory
 	var fakeCloudControllerClient *fakes.FakeCloudControllerClient
 	var fakeResponseParser *fakes.FakeResponseParser
+	var fakePaginatedParser *fakes.FakePaginatedParser
 	var apps models.Applications
 
 	var err error
@@ -26,10 +28,11 @@ var _ = Describe("DiegoApps", func() {
 		fakeRequestFactory = new(fakes.FakeRequestFactory)
 		fakeCloudControllerClient = new(fakes.FakeCloudControllerClient)
 		fakeResponseParser = new(fakes.FakeResponseParser)
+		fakePaginatedParser = new(fakes.FakePaginatedParser)
 	})
 
 	JustBeforeEach(func() {
-		apps, err = commands.DiegoApps(fakeCliCon, fakeRequestFactory, fakeCloudControllerClient, fakeResponseParser)
+		apps, err = commands.DiegoApps(fakeCliCon, fakeRequestFactory, fakeCloudControllerClient, fakeResponseParser, fakePaginatedParser)
 	})
 
 	Context("when logged in", func() {
@@ -125,38 +128,85 @@ var _ = Describe("DiegoApps", func() {
 						fakeCloudControllerClient.DoReturns(response, nil)
 					})
 
-					It("should parse the response", func() {
-						Expect(fakeResponseParser.ParseCallCount()).To(Equal(1))
-						Expect(fakeResponseParser.ParseArgsForCall(0)).To(Equal(response))
+					It("parses it to find out the number of pages", func() {
+						Expect(fakePaginatedParser.ParseCallCount()).To(Equal(1))
 					})
 
-					Context("when the parsing fails", func() {
-						var apps models.Applications
-						var parseError error
+					Context("when parsing for the number of pages fails", func() {
+						var parseErr error
 
 						BeforeEach(func() {
-							parseError = errors.New("parsing json failed")
-							fakeResponseParser.ParseReturns(apps, parseError)
+							parseErr = errors.New("some err")
+							fakePaginatedParser.ParseReturns(api.PaginatedResponse{}, parseErr)
 						})
 
-						It("returns the parse error", func() {
+						It("returns the error", func() {
 							Expect(apps).To(BeEmpty())
-							Expect(err).To(Equal(parseError))
+							Expect(err).To(Equal(parseErr))
 						})
 					})
 
-					Context("when the parsing succeeds", func() {
-						var parsedApps models.Applications = []models.Application{
-							models.Application{Diego: true},
-						}
+					Context("when parsing for the number of pages succeeds", func() {
+						Context("when there's only one page", func() {
+							BeforeEach(func() {
+								fakePaginatedParser.ParseReturns(api.PaginatedResponse{
+									TotalPages: 1,
+								}, nil)
+							})
 
-						BeforeEach(func() {
-							fakeResponseParser.ParseReturns(parsedApps, nil)
+							It("does not make more API calls", func() {
+								Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
+								Expect(fakeRequestFactory.NewGetAppsRequestArgsForCall(0)["page"]).To(BeNil())
+							})
 						})
 
-						It("returns a list of diego applications", func() {
-							Expect(apps).To(Equal(parsedApps))
-							Expect(err).NotTo(HaveOccurred())
+						Context("when there's more than one page", func() {
+							BeforeEach(func() {
+								fakePaginatedParser.ParseReturns(api.PaginatedResponse{
+									TotalPages: 2,
+								}, nil)
+							})
+
+							It("calls for more results", func() {
+								Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(2))
+								Expect(fakeRequestFactory.NewGetAppsRequestArgsForCall(1)["page"]).To(Equal(2))
+							})
+
+							Context("when the parsing fails", func() {
+								var apps models.Applications
+								var parseError error
+
+								BeforeEach(func() {
+									parseError = errors.New("parsing json failed")
+									fakeResponseParser.ParseReturns(apps, parseError)
+								})
+
+								It("returns the parse error", func() {
+									Expect(apps).To(BeEmpty())
+									Expect(err).To(Equal(parseError))
+								})
+							})
+
+							Context("when the parsing succeeds", func() {
+								var parsedApps models.Applications = models.Applications{
+									models.Application{Diego: true},
+								}
+
+								BeforeEach(func() {
+									// for each call of Parse
+									fakeResponseParser.ParseReturns(parsedApps, nil)
+								})
+
+								It("returns a list of diego applications", func() {
+									expectedApps := models.Applications{
+										models.Application{Diego: true},
+										models.Application{Diego: true},
+									}
+
+									Expect(apps).To(Equal(expectedApps))
+									Expect(err).NotTo(HaveOccurred())
+								})
+							})
 						})
 					})
 				})

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
@@ -24,13 +25,18 @@ type ResponseParser interface {
 	Parse(*http.Response) (models.Applications, error)
 }
 
+//go:generate counterfeiter . PaginatedParser
+type PaginatedParser interface {
+	Parse(*http.Response) (api.PaginatedResponse, error)
+}
+
 //go:generate counterfeiter . CliConnection
 type CliConnection interface {
 	IsLoggedIn() (bool, error)
 	AccessToken() (string, error)
 }
 
-func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControllerClient, resParser ResponseParser) (models.Applications, error) {
+func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControllerClient, appsParser ResponseParser, pageParser PaginatedParser) (models.Applications, error) {
 	var noApps models.Applications
 
 	if err := verifyLoggedIn(cliCon); err != nil {
@@ -53,12 +59,49 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 
 	req.Header.Set("Authorization", accessToken)
 
+	var responses []*http.Response
+
 	res, err := client.Do(req)
 	if err != nil {
 		return noApps, err
 	}
+	responses = append(responses, res)
 
-	return resParser.Parse(res)
+	paginatedRes, err := pageParser.Parse(res)
+	if err != nil {
+		return noApps, err
+	}
+	for page := 2; page <= paginatedRes.TotalPages; page++ {
+		// construct a new request with the current page
+		params["page"] = page
+		req, err := factory.NewGetAppsRequest(params)
+		if err != nil {
+			return noApps, err
+		}
+
+		req.Header.Set("Authorization", accessToken)
+
+		// perform the request
+		res, err := client.Do(req)
+		if err != nil {
+			return noApps, err
+		}
+
+		responses = append(responses, res)
+	}
+
+	var applications models.Applications
+
+	for _, nextRes := range responses {
+		apps, err := appsParser.Parse(nextRes)
+		if err != nil {
+			return noApps, err
+		}
+
+		applications = append(applications, apps...)
+	}
+
+	return applications, nil
 }
 
 func verifyLoggedIn(cliCon CliConnection) error {
