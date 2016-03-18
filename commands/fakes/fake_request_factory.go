@@ -5,14 +5,16 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 )
 
 type FakeRequestFactory struct {
-	NewGetAppsRequestStub        func(map[string]interface{}) (*http.Request, error)
+	NewGetAppsRequestStub        func(api.Filters, map[string]interface{}) (*http.Request, error)
 	newGetAppsRequestMutex       sync.RWMutex
 	newGetAppsRequestArgsForCall []struct {
-		arg1 map[string]interface{}
+		arg1 api.Filters
+		arg2 map[string]interface{}
 	}
 	newGetAppsRequestReturns struct {
 		result1 *http.Request
@@ -20,14 +22,15 @@ type FakeRequestFactory struct {
 	}
 }
 
-func (fake *FakeRequestFactory) NewGetAppsRequest(arg1 map[string]interface{}) (*http.Request, error) {
+func (fake *FakeRequestFactory) NewGetAppsRequest(arg1 api.Filters, arg2 map[string]interface{}) (*http.Request, error) {
 	fake.newGetAppsRequestMutex.Lock()
 	fake.newGetAppsRequestArgsForCall = append(fake.newGetAppsRequestArgsForCall, struct {
-		arg1 map[string]interface{}
-	}{arg1})
+		arg1 api.Filters
+		arg2 map[string]interface{}
+	}{arg1, arg2})
 	fake.newGetAppsRequestMutex.Unlock()
 	if fake.NewGetAppsRequestStub != nil {
-		return fake.NewGetAppsRequestStub(arg1)
+		return fake.NewGetAppsRequestStub(arg1, arg2)
 	} else {
 		return fake.newGetAppsRequestReturns.result1, fake.newGetAppsRequestReturns.result2
 	}
@@ -39,10 +42,10 @@ func (fake *FakeRequestFactory) NewGetAppsRequestCallCount() int {
 	return len(fake.newGetAppsRequestArgsForCall)
 }
 
-func (fake *FakeRequestFactory) NewGetAppsRequestArgsForCall(i int) map[string]interface{} {
+func (fake *FakeRequestFactory) NewGetAppsRequestArgsForCall(i int) (api.Filters, map[string]interface{}) {
 	fake.newGetAppsRequestMutex.RLock()
 	defer fake.newGetAppsRequestMutex.RUnlock()
-	return fake.newGetAppsRequestArgsForCall[i].arg1
+	return fake.newGetAppsRequestArgsForCall[i].arg1, fake.newGetAppsRequestArgsForCall[i].arg2
 }
 
 func (fake *FakeRequestFactory) NewGetAppsRequestReturns(result1 *http.Request, result2 error) {

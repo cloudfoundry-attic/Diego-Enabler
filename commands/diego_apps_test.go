@@ -72,12 +72,16 @@ var _ = Describe("DiegoApps", func() {
 			})
 
 			It("should create a request", func() {
-				expectedParams := map[string]interface{}{
-					"diego": true,
+				expectedFilters := api.Filters{
+					api.EqualFilter{
+						Name:  "diego",
+						Value: true,
+					},
 				}
 
 				Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
-				Expect(fakeRequestFactory.NewGetAppsRequestArgsForCall(0)).To(Equal(expectedParams))
+				filters, _ := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
+				Expect(filters).To(Equal(expectedFilters))
 			})
 
 			Context("when creating the request fails", func() {
@@ -156,7 +160,9 @@ var _ = Describe("DiegoApps", func() {
 
 							It("does not make more API calls", func() {
 								Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
-								Expect(fakeRequestFactory.NewGetAppsRequestArgsForCall(0)["page"]).To(BeNil())
+
+								_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
+								Expect(params["page"]).To(BeNil())
 							})
 						})
 
@@ -169,7 +175,9 @@ var _ = Describe("DiegoApps", func() {
 
 							It("calls for more results", func() {
 								Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(2))
-								Expect(fakeRequestFactory.NewGetAppsRequestArgsForCall(1)["page"]).To(Equal(2))
+
+								_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(1)
+								Expect(params["page"]).To(Equal(2))
 							})
 
 							Context("when the parsing fails", func() {
