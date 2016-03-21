@@ -97,6 +97,7 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 
 	pageParser := api.PageParser{}
 	appsParser := models.ApplicationsParser{}
+	spacesParser := models.SpacesParser{}
 
 	apiEndpoint, err := cliConnection.ApiEndpoint()
 	if err != nil {
@@ -119,6 +120,21 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 		exitWithError(err, []string{})
 	}
 
+	var spaceGuids []string
+	for _, app := range apps {
+		spaceGuids = append(spaceGuids, app.SpaceGuid)
+	}
+
+	spaces, err := commands.Spaces(apiClient, httpClient, spacesParser, pageParser, spaceGuids)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	var spaceMap map[string]models.Space
+	for _, space := range spaces {
+		spaceMap[space.Guid] = space
+	}
+
 	sayOk()
 
 	traceEnv := os.Getenv("CF_TRACE")
@@ -127,15 +143,32 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 
 	headers := []string{
 		"name",
-		"space guid",
+		"space",
 	}
 	t := terminal.NewTable(ui, headers)
 
 	for _, app := range apps {
-		t.Add(app.Name, app.SpaceGuid)
+		t.Add(app.Name, spaceDisplayFor(app, spaceMap))
 	}
 
 	t.Print()
+}
+
+func spaceDisplayFor(app models.Application, spaces map[string]models.Space) string {
+	var display string
+
+	if len(spaces) == 0 {
+		display = app.SpaceGuid
+	} else {
+		space, ok := spaces[app.SpaceGuid]
+		if ok {
+			display = space.Name
+		} else {
+			display = app.SpaceGuid
+		}
+	}
+
+	return display
 }
 
 func (c *DiegoEnabler) showUsage(args []string) {
