@@ -1,8 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+
+	"crypto/tls"
+	"net/http"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
@@ -11,8 +15,6 @@ import (
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
-	"net/http"
-	"crypto/tls"
 )
 
 type DiegoEnabler struct{}
@@ -81,6 +83,16 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 	if err != nil {
 		exitWithError(err, []string{})
 	}
+
+	if err := verifyLoggedIn(cliConnection); err != nil {
+		exitWithError(err, []string{})
+	}
+
+	accessToken, err := cliConnection.AccessToken()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
 	fmt.Printf("Getting apps on the Diego runtime as %s...\n", terminal.EntityNameColor(username))
 
 	pageParser := api.PageParser{}
@@ -102,7 +114,7 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 		},
 	}
 
-	apps, err := commands.DiegoApps(cliConnection, apiClient, httpClient, appsParser, pageParser)
+	apps, err := commands.DiegoApps(accessToken, apiClient, httpClient, appsParser, pageParser)
 	if err != nil {
 		exitWithError(err, []string{})
 	}
@@ -198,3 +210,19 @@ func sayOk() {
 func sayFailed() {
 	fmt.Println(say("FAILED", 31, 1))
 }
+
+func verifyLoggedIn(cliCon plugin.CliConnection) error {
+	var result error
+
+	if connected, err := cliCon.IsLoggedIn(); !connected {
+		result = NotLoggedInError
+
+		if err != nil {
+			result = err
+		}
+	}
+
+	return result
+}
+
+var NotLoggedInError = errors.New("You must be logged in")

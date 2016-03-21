@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"net/http"
 
 	"io/ioutil"
@@ -9,8 +8,6 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
-
-var NotLoggedInError = errors.New("You must be logged in")
 
 //go:generate counterfeiter . RequestFactory
 type RequestFactory interface {
@@ -32,18 +29,8 @@ type PaginatedParser interface {
 	Parse([]byte) (api.PaginatedResponse, error)
 }
 
-//go:generate counterfeiter . CliConnection
-type CliConnection interface {
-	IsLoggedIn() (bool, error)
-	AccessToken() (string, error)
-}
-
-func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControllerClient, appsParser ResponseParser, pageParser PaginatedParser) (models.Applications, error) {
+func DiegoApps(accessToken string, factory RequestFactory, client CloudControllerClient, appsParser ResponseParser, pageParser PaginatedParser) (models.Applications, error) {
 	var noApps models.Applications
-
-	if err := verifyLoggedIn(cliCon); err != nil {
-		return noApps, err
-	}
 
 	filter := api.EqualFilter{
 		Name:  "diego",
@@ -53,11 +40,6 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 	params := map[string]interface{}{}
 
 	req, err := factory.NewGetAppsRequest(filter, params)
-	if err != nil {
-		return noApps, err
-	}
-
-	accessToken, err := cliCon.AccessToken()
 	if err != nil {
 		return noApps, err
 	}
@@ -124,18 +106,4 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 	}
 
 	return applications, nil
-}
-
-func verifyLoggedIn(cliCon CliConnection) error {
-	var result error
-
-	if connected, err := cliCon.IsLoggedIn(); !connected {
-		result = NotLoggedInError
-
-		if err != nil {
-			result = err
-		}
-	}
-
-	return result
 }

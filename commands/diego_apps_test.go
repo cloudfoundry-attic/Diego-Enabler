@@ -9,13 +9,13 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"io/ioutil"
 	"net/http"
 	"strings"
-	"io/ioutil"
 )
 
 var _ = Describe("DiegoApps", func() {
-	var fakeCliCon *fakes.FakeCliConnection
+	var authToken string
 	var fakeRequestFactory *fakes.FakeRequestFactory
 	var fakeCloudControllerClient *fakes.FakeCloudControllerClient
 	var fakeResponseParser *fakes.FakeResponseParser
@@ -26,14 +26,14 @@ var _ = Describe("DiegoApps", func() {
 
 	generateApiResponse := func(body string) *http.Response {
 		return &http.Response{
-			Status: "200 OK",
+			Status:     "200 OK",
 			StatusCode: http.StatusOK,
-			Body: ioutil.NopCloser(strings.NewReader(body)),
+			Body:       ioutil.NopCloser(strings.NewReader(body)),
 		}
 	}
 
 	BeforeEach(func() {
-		fakeCliCon = new(fakes.FakeCliConnection)
+		authToken = "some-auth-token"
 		fakeRequestFactory = new(fakes.FakeRequestFactory)
 		fakeCloudControllerClient = new(fakes.FakeCloudControllerClient)
 		fakeResponseParser = new(fakes.FakeResponseParser)
@@ -41,215 +41,166 @@ var _ = Describe("DiegoApps", func() {
 	})
 
 	JustBeforeEach(func() {
-		apps, err = commands.DiegoApps(fakeCliCon, fakeRequestFactory, fakeCloudControllerClient, fakeResponseParser, fakePaginatedParser)
+		apps, err = commands.DiegoApps(authToken, fakeRequestFactory, fakeCloudControllerClient, fakeResponseParser, fakePaginatedParser)
 	})
 
-	Context("when logged in", func() {
-		var testRequest *http.Request
-		var testResponse *http.Response
+	var testRequest *http.Request
+	var testResponse *http.Response
 
+	BeforeEach(func() {
+		testRequest, err = http.NewRequest("GET", "something", strings.NewReader(""))
+		Expect(err).NotTo(HaveOccurred())
+
+		testResponse = generateApiResponse("")
+
+		fakeRequestFactory.NewGetAppsRequestReturns(testRequest, nil)
+		fakeCloudControllerClient.DoReturns(testResponse, nil)
+	})
+
+	It("should create a request", func() {
+		expectedFilters := api.EqualFilter{
+			Name:  "diego",
+			Value: true,
+		}
+
+		Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
+		filters, _ := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
+		Expect(filters).To(Equal(expectedFilters))
+	})
+
+	Context("when creating the request fails", func() {
+		var disaster = errors.New("OH NOOOOOOO")
 		BeforeEach(func() {
-			testRequest, err = http.NewRequest("GET", "something", strings.NewReader(""))
-			Expect(err).NotTo(HaveOccurred())
+			fakeRequestFactory.NewGetAppsRequestReturns(new(http.Request), disaster)
+		})
 
-			testResponse = generateApiResponse("")
+		It("should return the error", func() {
+			Expect(apps).To(BeEmpty())
+			Expect(err).To(Equal(disaster))
+		})
+	})
 
-			fakeCliCon.IsLoggedInReturns(true, nil)
-			fakeCliCon.AccessTokenReturns("", nil)
+	Context("when creating the request succeeds", func() {
+		BeforeEach(func() {
 			fakeRequestFactory.NewGetAppsRequestReturns(testRequest, nil)
-			fakeCloudControllerClient.DoReturns(testResponse, nil)
 		})
 
-		It("tries to get an access token", func() {
-			Expect(fakeCliCon.AccessTokenCallCount()).To(Equal(1))
+		It("should make a request with the auth token as an Authorization header", func() {
+			Expect(fakeCloudControllerClient.DoCallCount()).To(Equal(1))
+
+			expectedRequest, err := http.NewRequest("GET", "something", strings.NewReader(""))
+			Expect(err).NotTo(HaveOccurred())
+			expectedRequest.Header.Set("Authorization", authToken)
+
+			Expect(fakeCloudControllerClient.DoArgsForCall(0)).To(Equal(expectedRequest))
 		})
 
-		Context("when getting the access token fails", func() {
-			accessTokenErr := errors.New("failed to get access token")
+		Context("when making the request fails", func() {
+			var requestError error
 
 			BeforeEach(func() {
-				fakeCliCon.AccessTokenReturns("", accessTokenErr)
+				requestError = errors.New("request execution failed")
+				fakeCloudControllerClient.DoReturns(new(http.Response), requestError)
 			})
 
-			It("should return the error", func() {
+			It("should return the request error", func() {
 				Expect(apps).To(BeEmpty())
-				Expect(err).To(Equal(accessTokenErr))
+				Expect(err).To(Equal(requestError))
 			})
 		})
 
-		Context("when getting the access token succeeds", func() {
-			testAccessToken := "testAuthToken"
+		Context("when making the request succeeds", func() {
+			response := generateApiResponse("")
 
 			BeforeEach(func() {
-				fakeCliCon.AccessTokenReturns(testAccessToken, nil)
+				fakeCloudControllerClient.DoReturns(response, nil)
 			})
 
-			It("should create a request", func() {
-				expectedFilters := api.EqualFilter{
-					Name:  "diego",
-					Value: true,
-				}
-
-				Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
-				filters, _ := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
-				Expect(filters).To(Equal(expectedFilters))
+			It("parses it to find out the number of pages", func() {
+				Expect(fakePaginatedParser.ParseCallCount()).To(Equal(1))
 			})
 
-			Context("when creating the request fails", func() {
-				var disaster = errors.New("OH NOOOOOOO")
+			Context("when parsing for the number of pages fails", func() {
+				var parseErr error
+
 				BeforeEach(func() {
-					fakeRequestFactory.NewGetAppsRequestReturns(new(http.Request), disaster)
+					parseErr = errors.New("some err")
+					fakePaginatedParser.ParseReturns(api.PaginatedResponse{}, parseErr)
 				})
 
-				It("should return the error", func() {
+				It("returns the error", func() {
 					Expect(apps).To(BeEmpty())
-					Expect(err).To(Equal(disaster))
+					Expect(err).To(Equal(parseErr))
 				})
 			})
 
-			Context("when creating the request succeeds", func() {
-				BeforeEach(func() {
-					fakeRequestFactory.NewGetAppsRequestReturns(testRequest, nil)
-				})
-
-				It("should make a request with the auth token as an Authorization header", func() {
-					Expect(fakeCloudControllerClient.DoCallCount()).To(Equal(1))
-
-					expectedRequest, err := http.NewRequest("GET", "something", strings.NewReader(""))
-					Expect(err).NotTo(HaveOccurred())
-					expectedRequest.Header.Set("Authorization", testAccessToken)
-
-					Expect(fakeCloudControllerClient.DoArgsForCall(0)).To(Equal(expectedRequest))
-				})
-
-				Context("when making the request fails", func() {
-					var requestError error
-
+			Context("when parsing for the number of pages succeeds", func() {
+				Context("when there's only one page", func() {
 					BeforeEach(func() {
-						requestError = errors.New("request execution failed")
-						fakeCloudControllerClient.DoReturns(new(http.Response), requestError)
+						fakePaginatedParser.ParseReturns(api.PaginatedResponse{
+							TotalPages: 1,
+						}, nil)
 					})
 
-					It("should return the request error", func() {
-						Expect(apps).To(BeEmpty())
-						Expect(err).To(Equal(requestError))
+					It("does not make more API calls", func() {
+						Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
+
+						_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
+						Expect(params["page"]).To(BeNil())
 					})
 				})
 
-				Context("when making the request succeeds", func() {
-					response := generateApiResponse("")
-
+				Context("when there's more than one page", func() {
 					BeforeEach(func() {
-						fakeCloudControllerClient.DoReturns(response, nil)
+						fakePaginatedParser.ParseReturns(api.PaginatedResponse{
+							TotalPages: 2,
+						}, nil)
 					})
 
-					It("parses it to find out the number of pages", func() {
-						Expect(fakePaginatedParser.ParseCallCount()).To(Equal(1))
+					It("calls for more results", func() {
+						Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(2))
+
+						_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(1)
+						Expect(params["page"]).To(Equal(2))
 					})
 
-					Context("when parsing for the number of pages fails", func() {
-						var parseErr error
+					Context("when the parsing fails", func() {
+						var apps models.Applications
+						var parseError error
 
 						BeforeEach(func() {
-							parseErr = errors.New("some err")
-							fakePaginatedParser.ParseReturns(api.PaginatedResponse{}, parseErr)
+							parseError = errors.New("parsing json failed")
+							fakeResponseParser.ParseReturns(apps, parseError)
 						})
 
-						It("returns the error", func() {
+						It("returns the parse error", func() {
 							Expect(apps).To(BeEmpty())
-							Expect(err).To(Equal(parseErr))
+							Expect(err).To(Equal(parseError))
 						})
 					})
 
-					Context("when parsing for the number of pages succeeds", func() {
-						Context("when there's only one page", func() {
-							BeforeEach(func() {
-								fakePaginatedParser.ParseReturns(api.PaginatedResponse{
-									TotalPages: 1,
-								}, nil)
-							})
+					Context("when the parsing succeeds", func() {
+						var parsedApps models.Applications = models.Applications{
+							models.Application{Diego: true},
+						}
 
-							It("does not make more API calls", func() {
-								Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
-
-								_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
-								Expect(params["page"]).To(BeNil())
-							})
+						BeforeEach(func() {
+							// for each call of Parse
+							fakeResponseParser.ParseReturns(parsedApps, nil)
 						})
 
-						Context("when there's more than one page", func() {
-							BeforeEach(func() {
-								fakePaginatedParser.ParseReturns(api.PaginatedResponse{
-									TotalPages: 2,
-								}, nil)
-							})
+						It("returns a list of diego applications", func() {
+							expectedApps := models.Applications{
+								models.Application{Diego: true},
+								models.Application{Diego: true},
+							}
 
-							It("calls for more results", func() {
-								Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(2))
-
-								_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(1)
-								Expect(params["page"]).To(Equal(2))
-							})
-
-							Context("when the parsing fails", func() {
-								var apps models.Applications
-								var parseError error
-
-								BeforeEach(func() {
-									parseError = errors.New("parsing json failed")
-									fakeResponseParser.ParseReturns(apps, parseError)
-								})
-
-								It("returns the parse error", func() {
-									Expect(apps).To(BeEmpty())
-									Expect(err).To(Equal(parseError))
-								})
-							})
-
-							Context("when the parsing succeeds", func() {
-								var parsedApps models.Applications = models.Applications{
-									models.Application{Diego: true},
-								}
-
-								BeforeEach(func() {
-									// for each call of Parse
-									fakeResponseParser.ParseReturns(parsedApps, nil)
-								})
-
-								It("returns a list of diego applications", func() {
-									expectedApps := models.Applications{
-										models.Application{Diego: true},
-										models.Application{Diego: true},
-									}
-
-									Expect(apps).To(Equal(expectedApps))
-									Expect(err).NotTo(HaveOccurred())
-								})
-							})
+							Expect(apps).To(Equal(expectedApps))
+							Expect(err).NotTo(HaveOccurred())
 						})
 					})
 				})
 			})
-		})
-	})
-
-	Context("when not logged in", func() {
-		BeforeEach(func() {
-			fakeCliCon.IsLoggedInReturns(false, nil)
-		})
-
-		It("should error", func() {
-			Expect(err).To(Equal(commands.NotLoggedInError))
-		})
-	})
-
-	Context("when the CliConnection fails", func() {
-		BeforeEach(func() {
-			fakeCliCon.IsLoggedInReturns(false, errors.New("horrible things"))
-		})
-
-		It("returns the error", func() {
-			Expect(err).To(Equal(errors.New("horrible things")))
 		})
 	})
 })
