@@ -18,7 +18,7 @@ type Application struct {
 	//RunningInstances     int
 	//HealthCheckTimeout   int
 	//State                string
-	//SpaceGuid            string
+	SpaceGuid string `json:"space_guid"`
 	//PackageUpdatedAt     *time.Time
 	//PackageState         string
 	//StagingFailedReason  string
