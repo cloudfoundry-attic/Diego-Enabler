@@ -4,8 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cloudfoundry-incubator/diego-enabler/api"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
+	"github.com/cloudfoundry-incubator/diego-enabler/models"
+	"github.com/cloudfoundry/cli/cf/terminal"
+	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
+	"net/http"
+	"crypto/tls"
 )
 
 type DiegoEnabler struct{}
@@ -40,6 +47,13 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 					Usage: "cf has-diego-enabled APP_NAME",
 				},
 			},
+			{
+				Name:     "diego-apps",
+				HelpText: "Lists all apps running on the Diego runtime that are visible to the user",
+				UsageDetails: plugin.Usage{
+					Usage: "cf diego-apps",
+				},
+			},
 		},
 	}
 }
@@ -55,9 +69,60 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		c.toggleDiegoSupport(false, cliConnection, args[1])
 	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
 		c.isDiegoEnabled(cliConnection, args[1])
+	} else if args[0] == "diego-apps" && len(args) == 1 {
+		c.showDiegoApps(cliConnection)
 	} else {
 		c.showUsage(args)
 	}
+}
+
+func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
+	username, err := cliConnection.Username()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+	fmt.Printf("Getting apps on the Diego runtime as %s...\n", terminal.EntityNameColor(username))
+
+	pageParser := api.PageParser{}
+	appsParser := models.ApplicationsParser{}
+
+	apiEndpoint, err := cliConnection.ApiEndpoint()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	apiClient, err := api.NewApiClient(apiEndpoint)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	apps, err := commands.DiegoApps(cliConnection, apiClient, httpClient, appsParser, pageParser)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	sayOk()
+
+	traceEnv := os.Getenv("CF_TRACE")
+	traceLogger := trace.NewLogger(false, traceEnv, "")
+	ui := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
+
+	headers := []string{
+		"name",
+	}
+	t := terminal.NewTable(ui, headers)
+
+	for _, app := range apps {
+		t.Add(app.Name)
+	}
+
+	t.Print()
 }
 
 func (c *DiegoEnabler) showUsage(args []string) {
