@@ -178,7 +178,14 @@ var _ = Describe("DiegoApps", func() {
 
 					Context("when the parsing succeeds", func() {
 						var parsedApps models.Applications = models.Applications{
-							models.Application{Diego: true},
+							models.Application{
+								models.ApplicationEntity{
+									Diego: true,
+								},
+								models.ApplicationMetadata{
+									Guid: "some-guid",
+								},
+							},
 						}
 
 						BeforeEach(func() {
@@ -188,8 +195,22 @@ var _ = Describe("DiegoApps", func() {
 
 						It("returns a list of diego applications", func() {
 							expectedApps := models.Applications{
-								models.Application{Diego: true},
-								models.Application{Diego: true},
+								models.Application{
+									models.ApplicationEntity{
+										Diego: true,
+									},
+									models.ApplicationMetadata{
+										Guid: "some-guid",
+									},
+								},
+								models.Application{
+									models.ApplicationEntity{
+										Diego: true,
+									},
+									models.ApplicationMetadata{
+										Guid: "some-guid",
+									},
+								},
 							}
 
 							Expect(apps).To(Equal(expectedApps))

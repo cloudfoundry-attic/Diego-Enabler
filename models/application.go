@@ -4,8 +4,11 @@ import "encoding/json"
 
 type Applications []Application
 
-type Application struct {
-	//Guid                 string
+type ApplicationMetadata struct {
+	Guid string `json:"guid"`
+}
+
+type ApplicationEntity struct {
 	Name string `json:"name"`
 	//BuildpackUrl         string
 	//Command              string
@@ -30,19 +33,18 @@ type Application struct {
 }
 
 type ApplicationsResponse struct {
-	Resources []ApplicationResource `json:"resources"`
+	Resources Applications `json:"resources"`
 }
 
-type ApplicationResource struct {
-	Application `json:"entity"`
+type Application struct {
+	ApplicationEntity `json:"entity"`
+	ApplicationMetadata `json:"metadata"`
 }
 
 type ApplicationsParser struct{}
 
 func (a ApplicationsParser) Parse(body []byte) (Applications, error) {
 	var response ApplicationsResponse
-
-	var applications Applications
 	var emptyApplications Applications
 
 	err := json.Unmarshal(body, &response)
@@ -50,9 +52,5 @@ func (a ApplicationsParser) Parse(body []byte) (Applications, error) {
 		return emptyApplications, err
 	}
 
-	for _, app := range response.Resources {
-		applications = append(applications, app.Application)
-	}
-
-	return applications, nil
+	return response.Resources, nil
 }

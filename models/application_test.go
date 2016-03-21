@@ -117,6 +117,7 @@ var _ = Describe("Application", func() {
 			Expect(applications[0].Name).To(Equal("ilovedogs"))
 			Expect(applications[1].Name).To(Equal("myapp"))
 			Expect(applications[0].SpaceGuid).To(Equal("1f7ac3a5-6f4e-4d6c-8edd-ce694fc8c907"))
+			Expect(applications[0].Guid).To(Equal("b2ba6466-23f7-4f90-935b-4da1c87b8943"))
 		})
 	})
 })
