@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 type PaginatedResponse struct {
@@ -72,30 +71,4 @@ func generateParams(filter Filter, params map[string]interface{}) url.Values {
 		values.Set(k, fmt.Sprint(v))
 	}
 	return values
-}
-
-type Filters []Filter
-
-//go:generate counterfeiter . Filter
-type Filter interface {
-	ToFilterQueryParam() string
-}
-
-type EqualFilter struct {
-	Name  string
-	Value interface{}
-}
-
-func (f EqualFilter) ToFilterQueryParam() string {
-	return fmt.Sprintf("%s:%v", f.Name, f.Value)
-}
-
-func (f Filters) ToFilterQueryParam() string {
-	var filters []string
-
-	for _, x := range f {
-		filters = append(filters, x.ToFilterQueryParam())
-	}
-
-	return strings.Join(filters, ";")
 }

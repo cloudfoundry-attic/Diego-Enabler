@@ -96,6 +96,17 @@ var _ = Describe("Api", func() {
 		})
 	})
 
+	Describe("InclusionFilter", func() {
+		It("serializes to `name IN a,b,c`", func() {
+			filter := InclusionFilter{
+				Name:  "foo",
+				Values: []interface{}{"bar0", "bar1", "bar2"},
+			}
+
+			Expect(filter.ToFilterQueryParam()).To(Equal("foo IN bar0,bar1,bar2"))
+		})
+	})
+
 	Describe("Filters", func() {
 		It("combines its filters together with semicolons", func() {
 			filter1 := new(fakes.FakeFilter)
