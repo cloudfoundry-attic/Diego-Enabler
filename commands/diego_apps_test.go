@@ -15,7 +15,6 @@ import (
 )
 
 var _ = Describe("DiegoApps", func() {
-	var authToken string
 	var fakeRequestFactory *fakes.FakeRequestFactory
 	var fakeCloudControllerClient *fakes.FakeCloudControllerClient
 	var fakeResponseParser *fakes.FakeResponseParser
@@ -33,7 +32,6 @@ var _ = Describe("DiegoApps", func() {
 	}
 
 	BeforeEach(func() {
-		authToken = "some-auth-token"
 		fakeRequestFactory = new(fakes.FakeRequestFactory)
 		fakeCloudControllerClient = new(fakes.FakeCloudControllerClient)
 		fakeResponseParser = new(fakes.FakeResponseParser)
@@ -41,7 +39,7 @@ var _ = Describe("DiegoApps", func() {
 	})
 
 	JustBeforeEach(func() {
-		apps, err = commands.DiegoApps(authToken, fakeRequestFactory, fakeCloudControllerClient, fakeResponseParser, fakePaginatedParser)
+		apps, err = commands.DiegoApps(fakeRequestFactory, fakeCloudControllerClient, fakeResponseParser, fakePaginatedParser)
 	})
 
 	var testRequest *http.Request
@@ -85,12 +83,11 @@ var _ = Describe("DiegoApps", func() {
 			fakeRequestFactory.NewGetAppsRequestReturns(testRequest, nil)
 		})
 
-		It("should make a request with the auth token as an Authorization header", func() {
+		It("should make a request", func() {
 			Expect(fakeCloudControllerClient.DoCallCount()).To(Equal(1))
 
 			expectedRequest, err := http.NewRequest("GET", "something", strings.NewReader(""))
 			Expect(err).NotTo(HaveOccurred())
-			expectedRequest.Header.Set("Authorization", authToken)
 
 			Expect(fakeCloudControllerClient.DoArgsForCall(0)).To(Equal(expectedRequest))
 		})

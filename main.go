@@ -103,7 +103,7 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 		exitWithError(err, []string{})
 	}
 
-	apiClient, err := api.NewApiClient(apiEndpoint)
+	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
 	if err != nil {
 		exitWithError(err, []string{})
 	}
@@ -114,7 +114,7 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 		},
 	}
 
-	apps, err := commands.DiegoApps(accessToken, apiClient, httpClient, appsParser, pageParser)
+	apps, err := commands.DiegoApps(apiClient, httpClient, appsParser, pageParser)
 	if err != nil {
 		exitWithError(err, []string{})
 	}

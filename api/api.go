@@ -28,9 +28,10 @@ func (p PageParser) Parse(body []byte) (PaginatedResponse, error) {
 
 type ApiClient struct {
 	BaseUrl *url.URL
+	AuthToken string
 }
 
-func NewApiClient(rawurl string) (*ApiClient, error) {
+func NewApiClient(rawurl string, authToken string) (*ApiClient, error) {
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func NewApiClient(rawurl string) (*ApiClient, error) {
 
 	client := &ApiClient{
 		BaseUrl: u,
+		AuthToken: authToken,
 	}
 
 	return client, nil
@@ -50,6 +52,11 @@ func (c *ApiClient) NewGetAppsRequest(filter Filter, params map[string]interface
 	}
 	req.URL.Path = "/v2/apps"
 	req.URL.RawQuery = generateParams(filter, params).Encode()
+
+	header := http.Header{}
+	header.Set("Authorization", c.AuthToken)
+
+	req.Header = header
 
 	return req, nil
 }

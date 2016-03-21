@@ -29,7 +29,7 @@ type PaginatedParser interface {
 	Parse([]byte) (api.PaginatedResponse, error)
 }
 
-func DiegoApps(accessToken string, factory RequestFactory, client CloudControllerClient, appsParser ResponseParser, pageParser PaginatedParser) (models.Applications, error) {
+func DiegoApps(factory RequestFactory, client CloudControllerClient, appsParser ResponseParser, pageParser PaginatedParser) (models.Applications, error) {
 	var noApps models.Applications
 
 	filter := api.EqualFilter{
@@ -43,11 +43,6 @@ func DiegoApps(accessToken string, factory RequestFactory, client CloudControlle
 	if err != nil {
 		return noApps, err
 	}
-
-	header := http.Header{}
-	header.Set("Authorization", accessToken)
-
-	req.Header = header
 
 	var responseBodies [][]byte
 
@@ -74,11 +69,6 @@ func DiegoApps(accessToken string, factory RequestFactory, client CloudControlle
 		if err != nil {
 			return noApps, err
 		}
-
-		header = http.Header{}
-		header.Set("Authorization", accessToken)
-
-		req.Header = header
 
 		// perform the request
 		res, err := client.Do(req)

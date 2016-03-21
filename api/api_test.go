@@ -16,6 +16,7 @@ var _ = Describe("Api", func() {
 			fakeFilter *fakes.FakeFilter
 			params     map[string]interface{}
 			baseUrl    string
+			authToken  string
 
 			request *http.Request
 			err     error
@@ -23,12 +24,13 @@ var _ = Describe("Api", func() {
 
 		BeforeEach(func() {
 			baseUrl = "https://api.my-crazy-domain.com"
+			authToken = "some-auth-token"
 			fakeFilter = new(fakes.FakeFilter)
 			params = map[string]interface{}{}
 		})
 
 		JustBeforeEach(func() {
-			apiClient, err = NewApiClient(baseUrl)
+			apiClient, err = NewApiClient(baseUrl, authToken)
 			Expect(err).NotTo(HaveOccurred())
 
 			request, err = apiClient.NewGetAppsRequest(fakeFilter, params)
@@ -36,6 +38,10 @@ var _ = Describe("Api", func() {
 
 		It("works", func() {
 			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("sets the Authorization header", func() {
+			Expect(request.Header.Get("Authorization")).To(Equal(authToken))
 		})
 
 		Context("when given filters", func() {
