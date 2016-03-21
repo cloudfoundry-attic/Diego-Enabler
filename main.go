@@ -127,11 +127,12 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 
 	headers := []string{
 		"name",
+		"space guid",
 	}
 	t := terminal.NewTable(ui, headers)
 
 	for _, app := range apps {
-		t.Add(app.Name)
+		t.Add(app.Name, app.SpaceGuid)
 	}
 
 	t.Print()
