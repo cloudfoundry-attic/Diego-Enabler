@@ -27,7 +27,7 @@ func (p PageParser) Parse(body []byte) (PaginatedResponse, error) {
 }
 
 type ApiClient struct {
-	BaseUrl *url.URL
+	BaseUrl   *url.URL
 	AuthToken string
 }
 
@@ -38,7 +38,7 @@ func NewApiClient(rawurl string, authToken string) (*ApiClient, error) {
 	}
 
 	client := &ApiClient{
-		BaseUrl: u,
+		BaseUrl:   u,
 		AuthToken: authToken,
 	}
 

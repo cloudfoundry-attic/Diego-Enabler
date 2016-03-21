@@ -19,8 +19,8 @@ type CloudControllerClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-//go:generate counterfeiter . ResponseParser
-type ResponseParser interface {
+//go:generate counterfeiter . ApplicationsParser
+type ApplicationsParser interface {
 	Parse([]byte) (models.Applications, error)
 }
 
@@ -29,7 +29,7 @@ type PaginatedParser interface {
 	Parse([]byte) (api.PaginatedResponse, error)
 }
 
-func DiegoApps(factory RequestFactory, client CloudControllerClient, appsParser ResponseParser, pageParser PaginatedParser) (models.Applications, error) {
+func DiegoApps(factory RequestFactory, client CloudControllerClient, appsParser ApplicationsParser, pageParser PaginatedParser) (models.Applications, error) {
 	var noApps models.Applications
 
 	filter := api.EqualFilter{

@@ -17,7 +17,7 @@ import (
 var _ = Describe("DiegoApps", func() {
 	var fakeRequestFactory *fakes.FakeRequestFactory
 	var fakeCloudControllerClient *fakes.FakeCloudControllerClient
-	var fakeResponseParser *fakes.FakeResponseParser
+	var fakeResponseParser *fakes.FakeApplicationsParser
 	var fakePaginatedParser *fakes.FakePaginatedParser
 	var apps models.Applications
 
@@ -34,7 +34,7 @@ var _ = Describe("DiegoApps", func() {
 	BeforeEach(func() {
 		fakeRequestFactory = new(fakes.FakeRequestFactory)
 		fakeCloudControllerClient = new(fakes.FakeCloudControllerClient)
-		fakeResponseParser = new(fakes.FakeResponseParser)
+		fakeResponseParser = new(fakes.FakeApplicationsParser)
 		fakePaginatedParser = new(fakes.FakePaginatedParser)
 	})
 
