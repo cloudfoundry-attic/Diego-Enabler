@@ -2,7 +2,6 @@
 package fakes
 
 import (
-	"net/http"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
@@ -10,10 +9,10 @@ import (
 )
 
 type FakeResponseParser struct {
-	ParseStub        func(*http.Response) (models.Applications, error)
+	ParseStub        func([]byte) (models.Applications, error)
 	parseMutex       sync.RWMutex
 	parseArgsForCall []struct {
-		arg1 *http.Response
+		arg1 []byte
 	}
 	parseReturns struct {
 		result1 models.Applications
@@ -21,10 +20,10 @@ type FakeResponseParser struct {
 	}
 }
 
-func (fake *FakeResponseParser) Parse(arg1 *http.Response) (models.Applications, error) {
+func (fake *FakeResponseParser) Parse(arg1 []byte) (models.Applications, error) {
 	fake.parseMutex.Lock()
 	fake.parseArgsForCall = append(fake.parseArgsForCall, struct {
-		arg1 *http.Response
+		arg1 []byte
 	}{arg1})
 	fake.parseMutex.Unlock()
 	if fake.ParseStub != nil {
@@ -40,7 +39,7 @@ func (fake *FakeResponseParser) ParseCallCount() int {
 	return len(fake.parseArgsForCall)
 }
 
-func (fake *FakeResponseParser) ParseArgsForCall(i int) *http.Response {
+func (fake *FakeResponseParser) ParseArgsForCall(i int) []byte {
 	fake.parseMutex.RLock()
 	defer fake.parseMutex.RUnlock()
 	return fake.parseArgsForCall[i].arg1

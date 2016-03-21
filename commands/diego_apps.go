@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"io/ioutil"
+
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
@@ -22,12 +24,12 @@ type CloudControllerClient interface {
 
 //go:generate counterfeiter . ResponseParser
 type ResponseParser interface {
-	Parse(*http.Response) (models.Applications, error)
+	Parse([]byte) (models.Applications, error)
 }
 
 //go:generate counterfeiter . PaginatedParser
 type PaginatedParser interface {
-	Parse(*http.Response) (api.PaginatedResponse, error)
+	Parse([]byte) (api.PaginatedResponse, error)
 }
 
 //go:generate counterfeiter . CliConnection
@@ -60,17 +62,26 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 		return noApps, err
 	}
 
-	req.Header.Set("Authorization", accessToken)
+	header := http.Header{}
+	header.Set("Authorization", accessToken)
 
-	var responses []*http.Response
+	req.Header = header
+
+	var responseBodies [][]byte
 
 	res, err := client.Do(req)
 	if err != nil {
 		return noApps, err
 	}
-	responses = append(responses, res)
 
-	paginatedRes, err := pageParser.Parse(res)
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return noApps, err
+	}
+
+	responseBodies = append(responseBodies, body)
+
+	paginatedRes, err := pageParser.Parse(body)
 	if err != nil {
 		return noApps, err
 	}
@@ -82,7 +93,10 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 			return noApps, err
 		}
 
-		req.Header.Set("Authorization", accessToken)
+		header = http.Header{}
+		header.Set("Authorization", accessToken)
+
+		req.Header = header
 
 		// perform the request
 		res, err := client.Do(req)
@@ -90,13 +104,18 @@ func DiegoApps(cliCon CliConnection, factory RequestFactory, client CloudControl
 			return noApps, err
 		}
 
-		responses = append(responses, res)
+		body, err = ioutil.ReadAll(res.Body)
+		if err != nil {
+			return noApps, err
+		}
+
+		responseBodies = append(responseBodies, body)
 	}
 
 	var applications models.Applications
 
-	for _, nextRes := range responses {
-		apps, err := appsParser.Parse(nextRes)
+	for _, nextBody := range responseBodies {
+		apps, err := appsParser.Parse(nextBody)
 		if err != nil {
 			return noApps, err
 		}

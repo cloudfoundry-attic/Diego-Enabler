@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"net/http"
 	"strings"
+	"io/ioutil"
 )
 
 var _ = Describe("DiegoApps", func() {
@@ -22,6 +23,14 @@ var _ = Describe("DiegoApps", func() {
 	var apps models.Applications
 
 	var err error
+
+	generateApiResponse := func(body string) *http.Response {
+		return &http.Response{
+			Status: "200 OK",
+			StatusCode: http.StatusOK,
+			Body: ioutil.NopCloser(strings.NewReader(body)),
+		}
+	}
 
 	BeforeEach(func() {
 		fakeCliCon = new(fakes.FakeCliConnection)
@@ -37,14 +46,18 @@ var _ = Describe("DiegoApps", func() {
 
 	Context("when logged in", func() {
 		var testRequest *http.Request
+		var testResponse *http.Response
 
 		BeforeEach(func() {
 			testRequest, err = http.NewRequest("GET", "something", strings.NewReader(""))
 			Expect(err).NotTo(HaveOccurred())
 
+			testResponse = generateApiResponse("")
+
 			fakeCliCon.IsLoggedInReturns(true, nil)
 			fakeCliCon.AccessTokenReturns("", nil)
 			fakeRequestFactory.NewGetAppsRequestReturns(testRequest, nil)
+			fakeCloudControllerClient.DoReturns(testResponse, nil)
 		})
 
 		It("tries to get an access token", func() {
@@ -124,7 +137,7 @@ var _ = Describe("DiegoApps", func() {
 				})
 
 				Context("when making the request succeeds", func() {
-					response := new(http.Response)
+					response := generateApiResponse("")
 
 					BeforeEach(func() {
 						fakeCloudControllerClient.DoReturns(response, nil)

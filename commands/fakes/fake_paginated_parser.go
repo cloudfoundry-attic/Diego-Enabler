@@ -2,7 +2,6 @@
 package fakes
 
 import (
-	"net/http"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
@@ -10,10 +9,10 @@ import (
 )
 
 type FakePaginatedParser struct {
-	ParseStub        func(*http.Response) (api.PaginatedResponse, error)
+	ParseStub        func([]byte) (api.PaginatedResponse, error)
 	parseMutex       sync.RWMutex
 	parseArgsForCall []struct {
-		arg1 *http.Response
+		arg1 []byte
 	}
 	parseReturns struct {
 		result1 api.PaginatedResponse
@@ -21,10 +20,10 @@ type FakePaginatedParser struct {
 	}
 }
 
-func (fake *FakePaginatedParser) Parse(arg1 *http.Response) (api.PaginatedResponse, error) {
+func (fake *FakePaginatedParser) Parse(arg1 []byte) (api.PaginatedResponse, error) {
 	fake.parseMutex.Lock()
 	fake.parseArgsForCall = append(fake.parseArgsForCall, struct {
-		arg1 *http.Response
+		arg1 []byte
 	}{arg1})
 	fake.parseMutex.Unlock()
 	if fake.ParseStub != nil {
@@ -40,7 +39,7 @@ func (fake *FakePaginatedParser) ParseCallCount() int {
 	return len(fake.parseArgsForCall)
 }
 
-func (fake *FakePaginatedParser) ParseArgsForCall(i int) *http.Response {
+func (fake *FakePaginatedParser) ParseArgsForCall(i int) []byte {
 	fake.parseMutex.RLock()
 	defer fake.parseMutex.RUnlock()
 	return fake.parseArgsForCall[i].arg1
