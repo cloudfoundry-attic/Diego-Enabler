@@ -355,8 +355,15 @@ var _ = Describe("Space", func() {
 			spaces, err := SpacesParser{}.Parse([]byte(jsonBody))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(spaces).NotTo(BeEmpty())
-			Expect(spaces[0].Name).To(Equal("myspace"))
-			Expect(spaces[0].Guid).To(Equal("1f7ac3a5-6f4e-4d6c-8edd-ce694fc8c907"))
+
+			space := spaces[0]
+			Expect(space.Name).To(Equal("myspace"))
+			Expect(space.Guid).To(Equal("1f7ac3a5-6f4e-4d6c-8edd-ce694fc8c907"))
+			Expect(space.OrganizationGuid).To(Equal("94fe9c1a-6bda-483b-bf48-d6fa39d08cb6"))
+
+			org := space.Organization
+			Expect(org.Name).To(Equal("myorg"))
+			Expect(org.Guid).To(Equal("94fe9c1a-6bda-483b-bf48-d6fa39d08cb6"))
 		})
 	})
 })

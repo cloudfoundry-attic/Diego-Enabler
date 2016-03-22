@@ -147,11 +147,12 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 	headers := []string{
 		"name",
 		"space",
+		"org",
 	}
 	t := terminal.NewTable(ui, headers)
 
 	for _, app := range apps {
-		t.Add(app.Name, spaceDisplayFor(app, spaceMap))
+		t.Add(app.Name, spaceDisplayFor(app, spaceMap), orgDisplayFor(app, spaceMap))
 	}
 
 	t.Print()
@@ -172,6 +173,23 @@ func spaceDisplayFor(app models.Application, spaces map[string]models.Space) str
 	}
 
 	return display
+}
+
+func orgDisplayFor(app models.Application, spaces map[string]models.Space) string {
+	if len(spaces) == 0 {
+		return ""
+	}
+
+	space, ok := spaces[app.SpaceGuid]
+	if !ok {
+		return ""
+	}
+
+	if space.Organization.Name != "" {
+		return space.Organization.Name
+	}
+
+	return space.OrganizationGuid
 }
 
 func (c *DiegoEnabler) showUsage(args []string) {

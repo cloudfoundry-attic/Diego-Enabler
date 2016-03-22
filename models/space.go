@@ -5,7 +5,9 @@ import "encoding/json"
 type Spaces []Space
 
 type SpaceEntity struct {
-	Name string `json:"name"`
+	Name             string       `json:"name"`
+	OrganizationGuid string       `json:"organization_guid"`
+	Organization     Organization `json:"organization"`
 }
 
 type SpaceMetadata struct {
@@ -19,6 +21,19 @@ type SpacesResponse struct {
 type Space struct {
 	SpaceEntity   `json:"entity"`
 	SpaceMetadata `json:"metadata"`
+}
+
+type Organization struct {
+	OrganizationEntity   `json:"entity"`
+	OrganizationMetadata `json:"metadata"`
+}
+
+type OrganizationEntity struct {
+	Name string `json:"name"`
+}
+
+type OrganizationMetadata struct {
+	Guid string `json:"guid"`
 }
 
 type SpacesParser struct{}

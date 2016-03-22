@@ -98,7 +98,7 @@ var _ = Describe("Api", func() {
 
 		Context("when given params", func() {
 			BeforeEach(func() {
-				params = map[string]interface{}{"param1": "paramValue", "param2": "some value with spaces",}
+				params = map[string]interface{}{"param1": "paramValue", "param2": "some value with spaces"}
 			})
 
 			It("adds the params to the request", func() {
