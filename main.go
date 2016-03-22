@@ -63,6 +63,16 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 					Usage: "cf dea-apps",
 				},
 			},
+			{
+				Name:     "migrate-apps-to-diego",
+				HelpText: "Migrate all apps to Diego",
+				UsageDetails: plugin.Usage{
+					Usage: `cf migrate-apps-to-diego
+
+WARNING:
+   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
+				},
+			},
 		},
 	}
 }
@@ -82,6 +92,8 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		c.showApps(cliConnection, commands.DiegoApps)
 	} else if args[0] == "dea-apps" && len(args) == 1 {
 		c.showApps(cliConnection, commands.DeaApps)
+	} else if args[0] == "migrate-apps-to-diego" && len(args) == 1 {
+		c.migrateAppsToDiego(cliConnection)
 	} else {
 		c.showUsage(args)
 	}
@@ -179,6 +191,117 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 	}
 
 	t.Print()
+}
+
+func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
+	username, err := cliConnection.Username()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+	fmt.Printf("Migrating apps to Diego as %s...\n", terminal.EntityNameColor(username))
+
+	if err := verifyLoggedIn(cliConnection); err != nil {
+		exitWithError(err, []string{})
+	}
+
+	accessToken, err := cliConnection.AccessToken()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	pageParser := api.PageParser{}
+	appsParser := models.ApplicationsParser{}
+	spacesParser := models.SpacesParser{}
+
+	apiEndpoint, err := cliConnection.ApiEndpoint()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	appRequestFactory := apiClient.HandleFiltersAndParameters(
+		apiClient.Authorize(apiClient.NewGetAppsRequest),
+	)
+
+	apps, err := commands.DeaApps(
+		appsParser,
+		&api.PaginatedRequester{
+			RequestFactory: appRequestFactory,
+			Client:         httpClient,
+			PageParser:     pageParser,
+		},
+	)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	spaceRequestFactory := apiClient.HandleFiltersAndParameters(
+		apiClient.Authorize(apiClient.NewGetSpacesRequest),
+	)
+
+	spaces, err := commands.Spaces(
+		spacesParser,
+		&api.PaginatedRequester{
+			RequestFactory: spaceRequestFactory,
+			Client:         httpClient,
+			PageParser:     pageParser,
+		},
+	)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	spaceMap := make(map[string]models.Space)
+	for _, space := range spaces {
+		spaceMap[space.Guid] = space
+	}
+
+	diegoSupport := diego_support.NewDiegoSupport(cliConnection)
+
+	warnings := 0
+	for _, app := range apps {
+		fmt.Println()
+		orgName := orgDisplayFor(app, spaceMap)
+		spaceName := spaceDisplayFor(app, spaceMap)
+
+		fmt.Printf(
+			"Migrating app %s in org %s / space %s to Diego as %s...\n",
+			terminal.EntityNameColor(app.Name),
+			terminal.EntityNameColor(orgName),
+			terminal.EntityNameColor(spaceName),
+			terminal.EntityNameColor(username),
+		)
+
+		_, err := diegoSupport.SetDiegoFlag(app.Guid, true)
+		if err != nil {
+			warnings += 1
+			fmt.Println("Error: ", err)
+			fmt.Println("Continuing...")
+			// WARNING: No authorization to migrate app APP_NAME in org ORG_NAME / space SPACE_NAME to Diego as PERSON...
+			continue
+		}
+
+		fmt.Printf(
+			"Completed migrating app %s in org %s / space %s to Diego as %s...\n",
+			terminal.EntityNameColor(app.Name),
+			terminal.EntityNameColor(orgName),
+			terminal.EntityNameColor(spaceName),
+			terminal.EntityNameColor(username),
+		)
+	}
+
+	fmt.Println()
+	fmt.Printf("Migration to Diego completed: %d apps, %d warnings\n", len(apps), warnings)
 }
 
 func spaceDisplayFor(app models.Application, spaces map[string]models.Space) string {
