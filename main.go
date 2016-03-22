@@ -8,6 +8,8 @@ import (
 	"crypto/tls"
 	"net/http"
 
+	"strings"
+
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
@@ -64,20 +66,10 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 				},
 			},
 			{
-				Name:     "migrate-apps-to-diego",
-				HelpText: "Migrate all apps to Diego",
+				Name:     "migrate-apps",
+				HelpText: "Migrate all apps to Diego/DEA",
 				UsageDetails: plugin.Usage{
-					Usage: `cf migrate-apps-to-diego
-
-WARNING:
-   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
-				},
-			},
-			{
-				Name:     "migrate-apps-to-dea",
-				HelpText: "Migrate all apps to DEA",
-				UsageDetails: plugin.Usage{
-					Usage: `cf migrate-apps-to-dea
+					Usage: `cf migrate-apps (diego | dea)
 
 WARNING:
    Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
@@ -102,10 +94,16 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		c.showApps(cliConnection, commands.DiegoApps)
 	} else if args[0] == "dea-apps" && len(args) == 1 {
 		c.showApps(cliConnection, commands.DeaApps)
-	} else if args[0] == "migrate-apps-to-diego" && len(args) == 1 {
-		c.migrateAppsToDiego(cliConnection)
-	} else if args[0] == "migrate-apps-to-dea" && len(args) == 1 {
-		c.migrateAppsToDea(cliConnection)
+	} else if args[0] == "migrate-apps" && len(args) == 2 {
+		runtime := strings.ToLower(args[1])
+
+		if runtime == "diego" {
+			c.migrateAppsToDiego(cliConnection)
+		} else if runtime == "dea" {
+			c.migrateAppsToDea(cliConnection)
+		} else {
+			c.showUsage(args)
+		}
 	} else {
 		c.showUsage(args)
 	}
