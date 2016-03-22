@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
+	"github.com/cloudfoundry-incubator/diego-enabler/api"
 )
 
 type FakeCloudControllerClient struct {
@@ -53,4 +53,4 @@ func (fake *FakeCloudControllerClient) DoReturns(result1 *http.Response, result2
 	}{result1, result2}
 }
 
-var _ commands.CloudControllerClient = new(FakeCloudControllerClient)
+var _ api.CloudControllerClient = new(FakeCloudControllerClient)

@@ -10,7 +10,7 @@ type SpacesParser interface {
 	Parse([]byte) (models.Spaces, error)
 }
 
-func Spaces(requestFactory RequestFactory, client CloudControllerClient, spacesParser SpacesParser, pageParser PaginatedParser) (models.Spaces, error) {
+func Spaces(spacesParser SpacesParser, paginatedRequester PaginatedRequester) (models.Spaces, error) {
 	var noSpaces models.Spaces
 
 	filter := api.Filters{}
@@ -19,7 +19,7 @@ func Spaces(requestFactory RequestFactory, client CloudControllerClient, spacesP
 		"inline-relations-depth": 1,
 	}
 
-	responseBodies, err := paginatedRequester(requestFactory, filter, params, client, pageParser)
+	responseBodies, err := paginatedRequester.Do(filter, params)
 	if err != nil {
 		return noSpaces, err
 	}

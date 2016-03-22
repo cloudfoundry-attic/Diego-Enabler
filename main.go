@@ -87,7 +87,7 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	}
 }
 
-func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.RequestFactory, commands.CloudControllerClient, commands.ApplicationsParser, commands.PaginatedParser) (models.Applications, error)) {
+func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error)) {
 	username, err := cliConnection.Username()
 	if err != nil {
 		exitWithError(err, []string{})
@@ -128,7 +128,14 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 		apiClient.Authorize(apiClient.NewGetAppsRequest),
 	)
 
-	apps, err := appsGetter(appRequestFactory, httpClient, appsParser, pageParser)
+	apps, err := appsGetter(
+		appsParser,
+		&api.PaginatedRequester{
+			RequestFactory: appRequestFactory,
+			Client:         httpClient,
+			PageParser:     pageParser,
+		},
+	)
 	if err != nil {
 		exitWithError(err, []string{})
 	}
@@ -137,7 +144,14 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 		apiClient.Authorize(apiClient.NewGetSpacesRequest),
 	)
 
-	spaces, err := commands.Spaces(spaceRequestFactory, httpClient, spacesParser, pageParser)
+	spaces, err := commands.Spaces(
+		spacesParser,
+		&api.PaginatedRequester{
+			RequestFactory: spaceRequestFactory,
+			Client:         httpClient,
+			PageParser:     pageParser,
+		},
+	)
 	if err != nil {
 		exitWithError(err, []string{})
 	}
@@ -166,8 +180,6 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 
 	t.Print()
 }
-
-
 
 func spaceDisplayFor(app models.Application, spaces map[string]models.Space) string {
 	var display string

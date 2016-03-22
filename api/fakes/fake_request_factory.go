@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 )
 
 type FakeRequestFactory struct {
@@ -55,4 +54,4 @@ func (fake *FakeRequestFactory) Returns(result1 *http.Request, result2 error) {
 	}{result1, result2}
 }
 
-var _ commands.RequestFactory = new(FakeRequestFactory).Spy
+var _ api.RequestFactory = new(FakeRequestFactory).Spy

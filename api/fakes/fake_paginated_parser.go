@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 )
 
 type FakePaginatedParser struct {
@@ -53,4 +52,4 @@ func (fake *FakePaginatedParser) ParseReturns(result1 api.PaginatedResponse, res
 	}{result1, result2}
 }
 
-var _ commands.PaginatedParser = new(FakePaginatedParser)
+var _ api.PaginatedParser = new(FakePaginatedParser)

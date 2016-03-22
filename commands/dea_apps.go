@@ -5,7 +5,7 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
-func DeaApps(requestFactory RequestFactory, client CloudControllerClient, appsParser ApplicationsParser, pageParser PaginatedParser) (models.Applications, error) {
+func DeaApps(appsParser ApplicationsParser, paginatedRequester PaginatedRequester) (models.Applications, error) {
 	var noApps models.Applications
 
 	filter := api.EqualFilter{
@@ -15,7 +15,7 @@ func DeaApps(requestFactory RequestFactory, client CloudControllerClient, appsPa
 
 	params := map[string]interface{}{}
 
-	responseBodies, err := paginatedRequester(requestFactory, filter, params, client, pageParser)
+	responseBodies, err := paginatedRequester.Do(filter, params)
 	if err != nil {
 		return noApps, err
 	}
