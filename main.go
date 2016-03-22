@@ -56,6 +56,13 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 					Usage: "cf diego-apps",
 				},
 			},
+			{
+				Name:     "dea-apps",
+				HelpText: "Lists all apps running on the DEA runtime that are visible to the user",
+				UsageDetails: plugin.Usage{
+					Usage: "cf dea-apps",
+				},
+			},
 		},
 	}
 }
@@ -73,6 +80,8 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		c.isDiegoEnabled(cliConnection, args[1])
 	} else if args[0] == "diego-apps" && len(args) == 1 {
 		c.showDiegoApps(cliConnection)
+	} else if args[0] == "dea-apps" && len(args)== 1 {
+		c.showDeaApps(cliConnection)
 	} else {
 		c.showUsage(args)
 	}
@@ -120,6 +129,87 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 	)
 
 	apps, err := commands.DiegoApps(appRequestFactory, httpClient, appsParser, pageParser)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	spaceRequestFactory := apiClient.HandleFiltersAndParameters(
+		apiClient.Authorize(apiClient.NewGetSpacesRequest),
+	)
+
+	spaces, err := commands.Spaces(spaceRequestFactory, httpClient, spacesParser, pageParser)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	spaceMap := make(map[string]models.Space)
+	for _, space := range spaces {
+		spaceMap[space.Guid] = space
+	}
+
+	sayOk()
+
+	traceEnv := os.Getenv("CF_TRACE")
+	traceLogger := trace.NewLogger(false, traceEnv, "")
+	ui := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
+
+	headers := []string{
+		"name",
+		"space",
+		"org",
+	}
+	t := terminal.NewTable(ui, headers)
+
+	for _, app := range apps {
+		t.Add(app.Name, spaceDisplayFor(app, spaceMap), orgDisplayFor(app, spaceMap))
+	}
+
+	t.Print()
+}
+
+
+func (c *DiegoEnabler) showDeaApps(cliConnection plugin.CliConnection) {
+	username, err := cliConnection.Username()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	if err := verifyLoggedIn(cliConnection); err != nil {
+		exitWithError(err, []string{})
+	}
+
+	accessToken, err := cliConnection.AccessToken()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	fmt.Printf("Getting apps on the Diego runtime as %s...\n", terminal.EntityNameColor(username))
+
+	pageParser := api.PageParser{}
+	appsParser := models.ApplicationsParser{}
+	spacesParser := models.SpacesParser{}
+
+	apiEndpoint, err := cliConnection.ApiEndpoint()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	appRequestFactory := apiClient.HandleFiltersAndParameters(
+		apiClient.Authorize(apiClient.NewGetAppsRequest),
+	)
+
+	apps, err := commands.DeaApps(appRequestFactory, httpClient, appsParser, pageParser)
 	if err != nil {
 		exitWithError(err, []string{})
 	}
