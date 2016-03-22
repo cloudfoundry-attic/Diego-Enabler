@@ -37,7 +37,7 @@ type ApplicationsResponse struct {
 }
 
 type Application struct {
-	ApplicationEntity `json:"entity"`
+	ApplicationEntity   `json:"entity"`
 	ApplicationMetadata `json:"metadata"`
 }
 

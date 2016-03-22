@@ -1,4 +1,5 @@
 package commands
+
 import "github.com/cloudfoundry-incubator/diego-enabler/models"
 
 type SpacesParser interface {

@@ -9,10 +9,7 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
-//go:generate counterfeiter . RequestFactory
-type RequestFactory interface {
-	NewGetAppsRequest(api.Filter, map[string]interface{}) (*http.Request, error)
-}
+type RequestFactory func(api.Filter, map[string]interface{}) (*http.Request, error)
 
 //go:generate counterfeiter . CloudControllerClient
 type CloudControllerClient interface {
@@ -29,7 +26,7 @@ type PaginatedParser interface {
 	Parse([]byte) (api.PaginatedResponse, error)
 }
 
-func DiegoApps(factory RequestFactory, client CloudControllerClient, appsParser ApplicationsParser, pageParser PaginatedParser) (models.Applications, error) {
+func DiegoApps(requestFactory RequestFactory, client CloudControllerClient, appsParser ApplicationsParser, pageParser PaginatedParser) (models.Applications, error) {
 	var noApps models.Applications
 
 	filter := api.EqualFilter{
@@ -39,7 +36,7 @@ func DiegoApps(factory RequestFactory, client CloudControllerClient, appsParser 
 
 	params := map[string]interface{}{}
 
-	req, err := factory.NewGetAppsRequest(filter, params)
+	req, err := requestFactory(filter, params)
 	if err != nil {
 		return noApps, err
 	}
@@ -65,7 +62,7 @@ func DiegoApps(factory RequestFactory, client CloudControllerClient, appsParser 
 	for page := 2; page <= paginatedRes.TotalPages; page++ {
 		// construct a new request with the current page
 		params["page"] = page
-		req, err := factory.NewGetAppsRequest(filter, params)
+		req, err := requestFactory(filter, params)
 		if err != nil {
 			return noApps, err
 		}

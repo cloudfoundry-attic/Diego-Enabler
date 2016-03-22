@@ -3,15 +3,16 @@ package commands_test
 import (
 	"errors"
 
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/fakes"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io/ioutil"
-	"net/http"
-	"strings"
 )
 
 var _ = Describe("DiegoApps", func() {
@@ -20,6 +21,8 @@ var _ = Describe("DiegoApps", func() {
 	var fakeResponseParser *fakes.FakeApplicationsParser
 	var fakePaginatedParser *fakes.FakePaginatedParser
 	var apps models.Applications
+	var testRequest *http.Request
+	var testResponse *http.Response
 
 	var err error
 
@@ -32,27 +35,21 @@ var _ = Describe("DiegoApps", func() {
 	}
 
 	BeforeEach(func() {
-		fakeRequestFactory = new(fakes.FakeRequestFactory)
 		fakeCloudControllerClient = new(fakes.FakeCloudControllerClient)
 		fakeResponseParser = new(fakes.FakeApplicationsParser)
 		fakePaginatedParser = new(fakes.FakePaginatedParser)
+		fakeRequestFactory = new(fakes.FakeRequestFactory)
+
+		testRequest, err = http.NewRequest("GET", "something", strings.NewReader(""))
+		Expect(err).NotTo(HaveOccurred())
+		testResponse = generateApiResponse("")
+
+		fakeRequestFactory.Returns(testRequest, nil)
+		fakeCloudControllerClient.DoReturns(testResponse, nil)
 	})
 
 	JustBeforeEach(func() {
-		apps, err = commands.DiegoApps(fakeRequestFactory, fakeCloudControllerClient, fakeResponseParser, fakePaginatedParser)
-	})
-
-	var testRequest *http.Request
-	var testResponse *http.Response
-
-	BeforeEach(func() {
-		testRequest, err = http.NewRequest("GET", "something", strings.NewReader(""))
-		Expect(err).NotTo(HaveOccurred())
-
-		testResponse = generateApiResponse("")
-
-		fakeRequestFactory.NewGetAppsRequestReturns(testRequest, nil)
-		fakeCloudControllerClient.DoReturns(testResponse, nil)
+		apps, err = commands.DiegoApps(fakeRequestFactory.Spy, fakeCloudControllerClient, fakeResponseParser, fakePaginatedParser)
 	})
 
 	It("should create a request", func() {
@@ -61,15 +58,15 @@ var _ = Describe("DiegoApps", func() {
 			Value: true,
 		}
 
-		Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
-		filters, _ := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
+		Expect(fakeRequestFactory.CallCount()).To(Equal(1))
+		filters, _ := fakeRequestFactory.ArgsForCall(0)
 		Expect(filters).To(Equal(expectedFilters))
 	})
 
 	Context("when creating the request fails", func() {
 		var disaster = errors.New("OH NOOOOOOO")
 		BeforeEach(func() {
-			fakeRequestFactory.NewGetAppsRequestReturns(new(http.Request), disaster)
+			fakeRequestFactory.Returns(new(http.Request), disaster)
 		})
 
 		It("should return the error", func() {
@@ -80,7 +77,7 @@ var _ = Describe("DiegoApps", func() {
 
 	Context("when creating the request succeeds", func() {
 		BeforeEach(func() {
-			fakeRequestFactory.NewGetAppsRequestReturns(testRequest, nil)
+			fakeRequestFactory.Returns(testRequest, nil)
 		})
 
 		It("should make a request", func() {
@@ -140,9 +137,9 @@ var _ = Describe("DiegoApps", func() {
 					})
 
 					It("does not make more API calls", func() {
-						Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(1))
+						Expect(fakeRequestFactory.CallCount()).To(Equal(1))
 
-						_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(0)
+						_, params := fakeRequestFactory.ArgsForCall(0)
 						Expect(params["page"]).To(BeNil())
 					})
 				})
@@ -155,9 +152,9 @@ var _ = Describe("DiegoApps", func() {
 					})
 
 					It("calls for more results", func() {
-						Expect(fakeRequestFactory.NewGetAppsRequestCallCount()).To(Equal(2))
+						Expect(fakeRequestFactory.CallCount()).To(Equal(2))
 
-						_, params := fakeRequestFactory.NewGetAppsRequestArgsForCall(1)
+						_, params := fakeRequestFactory.ArgsForCall(1)
 						Expect(params["page"]).To(Equal(2))
 					})
 

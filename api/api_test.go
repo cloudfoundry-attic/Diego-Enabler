@@ -99,7 +99,7 @@ var _ = Describe("Api", func() {
 	Describe("InclusionFilter", func() {
 		It("serializes to `name IN a,b,c`", func() {
 			filter := InclusionFilter{
-				Name:  "foo",
+				Name:   "foo",
 				Values: []interface{}{"bar0", "bar1", "bar2"},
 			}
 

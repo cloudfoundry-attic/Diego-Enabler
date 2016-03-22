@@ -17,7 +17,7 @@ type SpacesResponse struct {
 }
 
 type Space struct {
-	SpaceEntity `json:"entity"`
+	SpaceEntity   `json:"entity"`
 	SpaceMetadata `json:"metadata"`
 }
 
