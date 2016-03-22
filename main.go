@@ -73,6 +73,16 @@ WARNING:
    Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
 				},
 			},
+			{
+				Name:     "migrate-apps-to-dea",
+				HelpText: "Migrate all apps to DEA",
+				UsageDetails: plugin.Usage{
+					Usage: `cf migrate-apps-to-dea
+
+WARNING:
+   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
+				},
+			},
 		},
 	}
 }
@@ -94,6 +104,8 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		c.showApps(cliConnection, commands.DeaApps)
 	} else if args[0] == "migrate-apps-to-diego" && len(args) == 1 {
 		c.migrateAppsToDiego(cliConnection)
+	} else if args[0] == "migrate-apps-to-dea" && len(args) == 1 {
+		c.migrateAppsToDea(cliConnection)
 	} else {
 		c.showUsage(args)
 	}
@@ -194,6 +206,14 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 }
 
 func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
+	c.migrateApps(cliConnection, commands.DeaApps, true)
+}
+
+func (c *DiegoEnabler) migrateAppsToDea(cliConnection plugin.CliConnection) {
+	c.migrateApps(cliConnection, commands.DiegoApps, false)
+}
+
+func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool) {
 	username, err := cliConnection.Username()
 	if err != nil {
 		exitWithError(err, []string{})
@@ -233,7 +253,7 @@ func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
 		apiClient.Authorize(apiClient.NewGetAppsRequest),
 	)
 
-	apps, err := commands.DeaApps(
+	apps, err := appsGetter(
 		appsParser,
 		&api.PaginatedRequester{
 			RequestFactory: appRequestFactory,
@@ -268,6 +288,13 @@ func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
 
 	diegoSupport := diego_support.NewDiegoSupport(cliConnection)
 
+	var runtime string
+	if enableDiego {
+		runtime = "Diego"
+	} else {
+		runtime = "DEA"
+	}
+
 	warnings := 0
 	for _, app := range apps {
 		fmt.Println()
@@ -275,33 +302,35 @@ func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
 		spaceName := spaceDisplayFor(app, spaceMap)
 
 		fmt.Printf(
-			"Migrating app %s in org %s / space %s to Diego as %s...\n",
+			"Migrating app %s in org %s / space %s to %s as %s...\n",
 			terminal.EntityNameColor(app.Name),
 			terminal.EntityNameColor(orgName),
 			terminal.EntityNameColor(spaceName),
+			terminal.EntityNameColor(runtime),
 			terminal.EntityNameColor(username),
 		)
 
-		_, err := diegoSupport.SetDiegoFlag(app.Guid, true)
+		_, err := diegoSupport.SetDiegoFlag(app.Guid, enableDiego)
 		if err != nil {
 			warnings += 1
 			fmt.Println("Error: ", err)
 			fmt.Println("Continuing...")
-			// WARNING: No authorization to migrate app APP_NAME in org ORG_NAME / space SPACE_NAME to Diego as PERSON...
+			// WARNING: No authorization to migrate app APP_NAME in org ORG_NAME / space SPACE_NAME to RUNTIME as PERSON...
 			continue
 		}
 
 		fmt.Printf(
-			"Completed migrating app %s in org %s / space %s to Diego as %s...\n",
+			"Completed migrating app %s in org %s / space %s to %s as %s...\n",
 			terminal.EntityNameColor(app.Name),
 			terminal.EntityNameColor(orgName),
 			terminal.EntityNameColor(spaceName),
+			terminal.EntityNameColor(runtime),
 			terminal.EntityNameColor(username),
 		)
 	}
 
 	fmt.Println()
-	fmt.Printf("Migration to Diego completed: %d apps, %d warnings\n", len(apps), warnings)
+	fmt.Printf("Migration to %s completed: %d apps, %d warnings\n", terminal.EntityNameColor(runtime), len(apps), warnings)
 }
 
 func spaceDisplayFor(app models.Application, spaces map[string]models.Space) string {
