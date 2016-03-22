@@ -36,49 +36,9 @@ func DiegoApps(requestFactory RequestFactory, client CloudControllerClient, apps
 
 	params := map[string]interface{}{}
 
-	req, err := requestFactory(filter, params)
+	responseBodies, err := paginatedRequester(requestFactory, filter, params, client, pageParser)
 	if err != nil {
 		return noApps, err
-	}
-
-	var responseBodies [][]byte
-
-	res, err := client.Do(req)
-	if err != nil {
-		return noApps, err
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return noApps, err
-	}
-
-	responseBodies = append(responseBodies, body)
-
-	paginatedRes, err := pageParser.Parse(body)
-	if err != nil {
-		return noApps, err
-	}
-	for page := 2; page <= paginatedRes.TotalPages; page++ {
-		// construct a new request with the current page
-		params["page"] = page
-		req, err := requestFactory(filter, params)
-		if err != nil {
-			return noApps, err
-		}
-
-		// perform the request
-		res, err := client.Do(req)
-		if err != nil {
-			return noApps, err
-		}
-
-		body, err = ioutil.ReadAll(res.Body)
-		if err != nil {
-			return noApps, err
-		}
-
-		responseBodies = append(responseBodies, body)
 	}
 
 	var applications models.Applications
@@ -93,4 +53,55 @@ func DiegoApps(requestFactory RequestFactory, client CloudControllerClient, apps
 	}
 
 	return applications, nil
+}
+
+func paginatedRequester(requestFactory RequestFactory, filter api.Filter, params map[string]interface{}, client CloudControllerClient, pageParser PaginatedParser) ([][]byte, error) {
+	var noBodies [][]byte
+
+	req, err := requestFactory(filter, params)
+	if err != nil {
+		return noBodies, err
+	}
+
+	var responseBodies [][]byte
+
+	res, err := client.Do(req)
+	if err != nil {
+		return noBodies, err
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return noBodies, err
+	}
+
+	responseBodies = append(responseBodies, body)
+
+	paginatedRes, err := pageParser.Parse(body)
+	if err != nil {
+		return noBodies, err
+	}
+	for page := 2; page <= paginatedRes.TotalPages; page++ {
+		// construct a new request with the current page
+		params["page"] = page
+		req, err := requestFactory(filter, params)
+		if err != nil {
+			return noBodies, err
+		}
+
+		// perform the request
+		res, err := client.Do(req)
+		if err != nil {
+			return noBodies, err
+		}
+
+		body, err = ioutil.ReadAll(res.Body)
+		if err != nil {
+			return noBodies, err
+		}
+
+		responseBodies = append(responseBodies, body)
+	}
+
+	return responseBodies, nil
 }

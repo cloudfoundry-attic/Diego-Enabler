@@ -115,26 +115,25 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 		},
 	}
 
-	requestFactory := apiClient.HandleFiltersAndParameters(
+	appRequestFactory := apiClient.HandleFiltersAndParameters(
 		apiClient.Authorize(apiClient.NewGetAppsRequest),
 	)
 
-	apps, err := commands.DiegoApps(requestFactory, httpClient, appsParser, pageParser)
+	apps, err := commands.DiegoApps(appRequestFactory, httpClient, appsParser, pageParser)
 	if err != nil {
 		exitWithError(err, []string{})
 	}
 
-	var spaceGuids []string
-	for _, app := range apps {
-		spaceGuids = append(spaceGuids, app.SpaceGuid)
-	}
+	spaceRequestFactory := apiClient.HandleFiltersAndParameters(
+		apiClient.Authorize(apiClient.NewGetSpacesRequest),
+	)
 
-	spaces, err := commands.Spaces(requestFactory, httpClient, spacesParser, pageParser, spaceGuids)
+	spaces, err := commands.Spaces(spaceRequestFactory, httpClient, spacesParser, pageParser)
 	if err != nil {
 		exitWithError(err, []string{})
 	}
 
-	var spaceMap map[string]models.Space
+	spaceMap := make(map[string]models.Space)
 	for _, space := range spaces {
 		spaceMap[space.Guid] = space
 	}
