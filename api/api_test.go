@@ -10,7 +10,44 @@ import (
 )
 
 var _ = Describe("Api", func() {
-	Describe("NewGetAppsRequest", func() {
+	Describe("Authorize", func() {
+		var (
+			apiClient  *ApiClient
+			baseUrl    string
+			authToken  string
+
+			request *http.Request
+			err     error
+		)
+
+		BeforeEach(func() {
+			baseUrl = "https://api.my-crazy-domain.com"
+			authToken = "some-auth-token"
+		})
+
+		JustBeforeEach(func() {
+			apiClient, err = NewApiClient(baseUrl, authToken)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("sets the Authorization header", func() {
+			reqFactory := apiClient.Authorize(func() (*http.Request, error) {
+				req := &http.Request{
+					Method: "GET",
+					URL:    apiClient.BaseUrl,
+				}
+				req.URL.Path = "/foobar"
+
+				return req, nil
+			})
+
+			request, err = reqFactory()
+
+			Expect(request.Header.Get("Authorization")).To(Equal(authToken))
+		})
+	})
+
+	Describe("HandleFiltersAndParameters", func() {
 		var (
 			apiClient  *ApiClient
 			fakeFilter *fakes.FakeFilter
@@ -33,15 +70,20 @@ var _ = Describe("Api", func() {
 			apiClient, err = NewApiClient(baseUrl, authToken)
 			Expect(err).NotTo(HaveOccurred())
 
-			request, err = apiClient.NewGetAppsRequest(fakeFilter, params)
+			requestFactory := apiClient.HandleFiltersAndParameters(func() (*http.Request, error) {
+				req := &http.Request{
+					Method: "GET",
+					URL:    apiClient.BaseUrl,
+				}
+				req.URL.Path = "/foobar"
+
+				return req, nil
+			})
+			request, err = requestFactory(fakeFilter, params)
 		})
 
 		It("works", func() {
 			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("sets the Authorization header", func() {
-			Expect(request.Header.Get("Authorization")).To(Equal(authToken))
 		})
 
 		Context("when given filters", func() {
@@ -63,6 +105,29 @@ var _ = Describe("Api", func() {
 				Expect(request.URL.Query().Get("param1")).To(Equal("paramValue"))
 				Expect(request.URL.Query().Get("param2")).To(Equal("paramValue2"))
 			})
+		})
+	})
+
+	Describe("NewGetAppsRequest", func() {
+		var (
+			apiClient  *ApiClient
+			baseUrl    string
+			authToken  string
+
+			request *http.Request
+			err     error
+		)
+
+		BeforeEach(func() {
+			baseUrl = "https://api.my-crazy-domain.com"
+			authToken = "some-auth-token"
+		})
+
+		JustBeforeEach(func() {
+			apiClient, err = NewApiClient(baseUrl, authToken)
+			Expect(err).NotTo(HaveOccurred())
+
+			request, err = apiClient.NewGetAppsRequest()
 		})
 
 		It("hits the appropriate API URL", func() {

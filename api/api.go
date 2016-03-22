@@ -44,20 +44,41 @@ func NewApiClient(rawurl string, authToken string) (*ApiClient, error) {
 	return client, nil
 }
 
-func (c *ApiClient) NewGetAppsRequest(filter Filter, params map[string]interface{}) (*http.Request, error) {
+func (c *ApiClient) NewGetAppsRequest() (*http.Request, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    c.BaseUrl,
 	}
 	req.URL.Path = "/v2/apps"
-	req.URL.RawQuery = generateParams(filter, params).Encode()
-
-	header := http.Header{}
-	header.Set("Authorization", c.AuthToken)
-
-	req.Header = header
 
 	return req, nil
+}
+
+func (c *ApiClient) HandleFiltersAndParameters(next func() (*http.Request, error)) func(filter Filter, params map[string]interface{}) (*http.Request, error) {
+	return func(filter Filter, params map[string]interface{}) (*http.Request, error) {
+		req, err := next()
+		if err != nil {
+			return new(http.Request), err
+		}
+
+		req.URL.RawQuery = generateParams(filter, params).Encode()
+		return req, nil
+	}
+}
+
+func (c *ApiClient) Authorize(next func() (*http.Request, error)) func() (*http.Request, error) {
+	return func() (*http.Request, error) {
+		req, err := next()
+		if err != nil {
+			return new(http.Request), err
+		}
+
+		header := http.Header{}
+		header.Set("Authorization", c.AuthToken)
+
+		req.Header = header
+		return req, nil
+	}
 }
 
 func generateParams(filter Filter, params map[string]interface{}) url.Values {
