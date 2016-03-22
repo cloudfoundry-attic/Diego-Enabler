@@ -54,6 +54,16 @@ func (c *ApiClient) NewGetAppsRequest() (*http.Request, error) {
 	return req, nil
 }
 
+func (c *ApiClient) NewGetSpacesRequest() (*http.Request, error) {
+	req := &http.Request{
+		Method: "GET",
+		URL:    c.BaseUrl,
+	}
+	req.URL.Path = "/v2/spaces"
+
+	return req, nil
+}
+
 func (c *ApiClient) HandleFiltersAndParameters(next func() (*http.Request, error)) func(filter Filter, params map[string]interface{}) (*http.Request, error) {
 	return func(filter Filter, params map[string]interface{}) (*http.Request, error) {
 		req, err := next()

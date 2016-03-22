@@ -12,9 +12,9 @@ import (
 var _ = Describe("Api", func() {
 	Describe("Authorize", func() {
 		var (
-			apiClient  *ApiClient
-			baseUrl    string
-			authToken  string
+			apiClient *ApiClient
+			baseUrl   string
+			authToken string
 
 			request *http.Request
 			err     error
@@ -110,9 +110,9 @@ var _ = Describe("Api", func() {
 
 	Describe("NewGetAppsRequest", func() {
 		var (
-			apiClient  *ApiClient
-			baseUrl    string
-			authToken  string
+			apiClient *ApiClient
+			baseUrl   string
+			authToken string
 
 			request *http.Request
 			err     error
@@ -133,6 +133,34 @@ var _ = Describe("Api", func() {
 		It("hits the appropriate API URL", func() {
 			Expect(request.Method).To(Equal("GET"))
 			Expect(request.URL.String()).To(Equal("https://api.my-crazy-domain.com/v2/apps"))
+		})
+	})
+
+	Describe("NewGetSpacesRequest", func() {
+		var (
+			apiClient *ApiClient
+			baseUrl   string
+			authToken string
+
+			request *http.Request
+			err     error
+		)
+
+		BeforeEach(func() {
+			baseUrl = "https://api.my-crazy-domain.com"
+			authToken = "some-auth-token"
+		})
+
+		JustBeforeEach(func() {
+			apiClient, err = NewApiClient(baseUrl, authToken)
+			Expect(err).NotTo(HaveOccurred())
+
+			request, err = apiClient.NewGetSpacesRequest()
+		})
+
+		It("hits the appropriate API URL", func() {
+			Expect(request.Method).To(Equal("GET"))
+			Expect(request.URL.String()).To(Equal("https://api.my-crazy-domain.com/v2/spaces"))
 		})
 	})
 

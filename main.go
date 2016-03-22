@@ -128,7 +128,7 @@ func (c *DiegoEnabler) showDiegoApps(cliConnection plugin.CliConnection) {
 	for _, app := range apps {
 		spaceGuids = append(spaceGuids, app.SpaceGuid)
 	}
-	
+
 	spaces, err := commands.Spaces(requestFactory, httpClient, spacesParser, pageParser, spaceGuids)
 	if err != nil {
 		exitWithError(err, []string{})
