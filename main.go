@@ -17,6 +17,7 @@ import (
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/jessevdk/go-flags"
 )
 
 type DiegoEnabler struct{}
@@ -55,7 +56,7 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 				Name:     "diego-apps",
 				HelpText: "Lists all apps running on the Diego runtime that are visible to the user",
 				UsageDetails: plugin.Usage{
-					Usage: "cf diego-apps",
+					Usage: "cf diego-apps [-o ORG]",
 				},
 			},
 			{
@@ -90,8 +91,26 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		c.toggleDiegoSupport(false, cliConnection, args[1])
 	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
 		c.isDiegoEnabled(cliConnection, args[1])
-	} else if args[0] == "diego-apps" && len(args) == 1 {
-		c.showApps(cliConnection, commands.DiegoApps)
+	} else if args[0] == "diego-apps" {
+		var opts struct {
+			Organization string `short:"o"`
+		}
+
+		_, err := flags.ParseArgs(&opts, args)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+
+		diegoAppsCommand := commands.DiegoAppsCommand{}
+		if opts.Organization != "" {
+			org, err := cliConnection.GetOrg(opts.Organization)
+			if err != nil {
+				exitWithError(err, []string{})
+			}
+			diegoAppsCommand.OrganizationGuid = org.Guid
+		}
+
+		c.showApps(cliConnection, diegoAppsCommand.DiegoApps)
 	} else if args[0] == "dea-apps" && len(args) == 1 {
 		c.showApps(cliConnection, commands.DeaApps)
 	} else if args[0] == "migrate-apps" && len(args) == 2 {
@@ -208,7 +227,7 @@ func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
 }
 
 func (c *DiegoEnabler) migrateAppsToDea(cliConnection plugin.CliConnection) {
-	c.migrateApps(cliConnection, commands.DiegoApps, false)
+	c.migrateApps(cliConnection, commands.DiegoAppsCommand{}.DiegoApps, false)
 }
 
 func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool) {

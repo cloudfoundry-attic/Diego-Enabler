@@ -10,14 +10,32 @@ type ApplicationsParser interface {
 	Parse([]byte) (models.Applications, error)
 }
 
-func DiegoApps(appsParser ApplicationsParser, paginatedRequester PaginatedRequester) (models.Applications, error) {
+type DiegoAppsCommand struct {
+	OrganizationGuid string
+}
+
+func (c DiegoAppsCommand) DiegoApps(
+	appsParser ApplicationsParser,
+	paginatedRequester PaginatedRequester,
+) (models.Applications, error) {
 	var noApps models.Applications
 
-	filter := api.EqualFilter{
-		Name:  "diego",
-		Value: true,
+	filter := api.Filters{
+		api.EqualFilter{
+			Name:  "diego",
+			Value: true,
+		},
 	}
 
+	if c.OrganizationGuid != "" {
+		filter = append(
+			filter,
+			api.EqualFilter{
+				Name:  "organization_guid",
+				Value: c.OrganizationGuid,
+			},
+		)
+	}
 	params := map[string]interface{}{}
 
 	responseBodies, err := paginatedRequester.Do(filter, params)

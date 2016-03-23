@@ -16,27 +16,55 @@ var _ = Describe("DiegoApps", func() {
 		fakePaginatedRequester *fakes.FakePaginatedRequester
 		fakeApplicationsParser *fakes.FakeApplicationsParser
 		apps                   models.Applications
-		err                    error
+
+		command commands.DiegoAppsCommand
+		err     error
 	)
 
 	BeforeEach(func() {
 		fakePaginatedRequester = new(fakes.FakePaginatedRequester)
 		fakeApplicationsParser = new(fakes.FakeApplicationsParser)
+		command = commands.DiegoAppsCommand{}
 	})
 
 	JustBeforeEach(func() {
-		apps, err = commands.DiegoApps(fakeApplicationsParser, fakePaginatedRequester)
+		apps, err = command.DiegoApps(fakeApplicationsParser, fakePaginatedRequester)
 	})
 
 	It("should create a request with diego filter set to true", func() {
-		expectedFilters := api.EqualFilter{
-			Name:  "diego",
-			Value: true,
+		expectedFilters := api.Filters{
+			api.EqualFilter{
+				Name:  "diego",
+				Value: true,
+			},
 		}
 
 		Expect(fakePaginatedRequester.DoCallCount()).To(Equal(1))
 		filters, _ := fakePaginatedRequester.DoArgsForCall(0)
 		Expect(filters).To(Equal(expectedFilters))
+	})
+
+	Context("when an organization name is specified", func() {
+		BeforeEach(func() {
+			command.OrganizationGuid = "some-organization-guid"
+		})
+
+		It("should create a request with organization guid set", func() {
+			expectedFilters := api.Filters{
+				api.EqualFilter{
+					Name:  "diego",
+					Value: true,
+				},
+				api.EqualFilter{
+					Name:  "organization_guid",
+					Value: "some-organization-guid",
+				},
+			}
+
+			Expect(fakePaginatedRequester.DoCallCount()).To(Equal(1))
+			filters, _ := fakePaginatedRequester.DoArgsForCall(0)
+			Expect(filters).To(Equal(expectedFilters))
+		})
 	})
 
 	Context("when the paginated requester fails", func() {
