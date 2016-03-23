@@ -70,7 +70,7 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 				Name:     "migrate-apps",
 				HelpText: "Migrate all apps to Diego/DEA",
 				UsageDetails: plugin.Usage{
-					Usage: `cf migrate-apps (diego | dea)
+					Usage: `cf migrate-apps (diego | dea) [-o ORG]
 
 WARNING:
    Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
@@ -131,13 +131,31 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		}
 
 		c.showApps(cliConnection, diegoAppsCommand.DeaApps)
-	} else if args[0] == "migrate-apps" && len(args) == 2 {
+	} else if args[0] == "migrate-apps" && len(args) >= 2 {
+		var opts struct {
+			Organization string `short:"o"`
+		}
+
+		_, err := flags.ParseArgs(&opts, args)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+
+		diegoAppsCommand := commands.DiegoAppsCommand{}
+		if opts.Organization != "" {
+			org, err := cliConnection.GetOrg(opts.Organization)
+			if err != nil {
+				exitWithError(err, []string{})
+			}
+			diegoAppsCommand.OrganizationGuid = org.Guid
+		}
+
 		runtime := strings.ToLower(args[1])
 
 		if runtime == "diego" {
-			c.migrateAppsToDiego(cliConnection)
+			c.migrateApps(cliConnection, diegoAppsCommand.DeaApps, true)
 		} else if runtime == "dea" {
-			c.migrateAppsToDea(cliConnection)
+			c.migrateApps(cliConnection, diegoAppsCommand.DiegoApps, false)
 		} else {
 			c.showUsage(args)
 		}
@@ -238,18 +256,6 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 	}
 
 	t.Print()
-}
-
-func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
-	command := commands.DiegoAppsCommand{}
-
-	c.migrateApps(cliConnection, command.DeaApps, true)
-}
-
-func (c *DiegoEnabler) migrateAppsToDea(cliConnection plugin.CliConnection) {
-	command := commands.DiegoAppsCommand{}
-
-	c.migrateApps(cliConnection, command.DiegoApps, false)
 }
 
 func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool) {
