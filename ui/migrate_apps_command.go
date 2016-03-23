@@ -29,12 +29,6 @@ func (c *MigrateAppsCommand) BeforeAll() {
 	}
 }
 
-type ApplicationPrinter interface {
-	Name() string
-	Organization() string
-	Space() string
-}
-
 func (c *MigrateAppsCommand) BeforeEach(app ApplicationPrinter) {
 	fmt.Println()
 	fmt.Printf(

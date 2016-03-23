@@ -96,11 +96,48 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
 		c.isDiegoEnabled(cliConnection, args[1])
 	} else if args[0] == "diego-apps" {
-		diegoAppsCommand, _ := parseArgs(cliConnection, args)
-		c.showApps(cliConnection, diegoAppsCommand.DiegoApps)
+		username, err := cliConnection.Username()
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+
+		traceEnv := os.Getenv("CF_TRACE")
+		traceLogger := trace.NewLogger(false, traceEnv, "")
+		tUI := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
+
+		runtime := "diego"
+		diegoAppsCommand, opts := parseArgs(cliConnection, args)
+		cmd := &ui.ListAppsCommand{
+			Username: username,
+			Runtime: ui.Runtime(runtime),
+			Organization: opts.Organization,
+			UI: tUI,
+		}
+
+		c.showApps(cliConnection, diegoAppsCommand.DiegoApps, cmd)
 	} else if args[0] == "dea-apps" {
-		diegoAppsCommand, _ := parseArgs(cliConnection, args)
-		c.showApps(cliConnection, diegoAppsCommand.DeaApps)
+		username, err := cliConnection.Username()
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+
+		traceEnv := os.Getenv("CF_TRACE")
+		traceLogger := trace.NewLogger(false, traceEnv, "")
+		tUI := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
+
+		runtime := "dea"
+
+		diegoAppsCommand, opts := parseArgs(cliConnection, args)
+
+		cmd := &ui.ListAppsCommand{
+			Username: username,
+			UI: tUI,
+		}
+
+		cmd.Runtime = ui.Runtime(runtime)
+		cmd.Organization = opts.Organization
+
+		c.showApps(cliConnection, diegoAppsCommand.DeaApps, cmd)
 	} else if args[0] == "migrate-apps" && len(args) >= 2 {
 		username, err := cliConnection.Username()
 		if err != nil {
@@ -152,12 +189,7 @@ func parseArgs(cliConnection plugin.CliConnection, args []string) (commands.Dieg
 	return diegoAppsCommand, opts
 }
 
-func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error)) {
-	username, err := cliConnection.Username()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
+func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), p *ui.ListAppsCommand) {
 	if err := verifyLoggedIn(cliConnection); err != nil {
 		exitWithError(err, []string{})
 	}
@@ -167,7 +199,7 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 		exitWithError(err, []string{})
 	}
 
-	fmt.Printf("Getting apps on the Diego runtime as %s...\n", terminal.EntityNameColor(username))
+	p.BeforeAll()
 
 	pageParser := api.PageParser{}
 	appsParser := models.ApplicationsParser{}
@@ -226,29 +258,15 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 		spaceMap[space.Guid] = space
 	}
 
-	sayOk()
-
-	traceEnv := os.Getenv("CF_TRACE")
-	traceLogger := trace.NewLogger(false, traceEnv, "")
-	ui := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
-
-	headers := []string{
-		"name",
-		"space",
-		"org",
-	}
-	t := terminal.NewTable(ui, headers)
-
-	for _, app := range apps {
-		a := &appPrinter{
-			app: app,
+	var appPrinters []ui.ApplicationPrinter
+	for _, a := range apps {
+		appPrinters = append(appPrinters, &appPrinter{
+			app: a,
 			spaces: spaceMap,
-		}
-
-		t.Add(a.Name(), a.Space(), a.Organization())
+		})
 	}
 
-	t.Print()
+	p.AfterAll(appPrinters)
 }
 
 func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool, p *ui.MigrateAppsCommand) {

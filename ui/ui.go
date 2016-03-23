@@ -1,6 +1,9 @@
 package ui
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Runtime string
 
@@ -19,3 +22,17 @@ const (
 	DEA   = "DEA"
 	Diego = "Diego"
 )
+
+func sayOk() {
+	fmt.Println(say("Ok\n", 32, 1))
+}
+
+func say(message string, color uint, bold int) string {
+	return fmt.Sprintf("\033[%d;%dm%s\033[0m", bold, color, message)
+}
+
+type ApplicationPrinter interface {
+	Name() string
+	Organization() string
+	Space() string
+}
