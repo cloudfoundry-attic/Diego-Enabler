@@ -235,7 +235,18 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 	if err != nil {
 		exitWithError(err, []string{})
 	}
-	fmt.Printf("Migrating apps to Diego as %s...\n", terminal.EntityNameColor(username))
+
+	var runtime string
+	if enableDiego {
+		runtime = "Diego"
+	} else {
+		runtime = "DEA"
+	}
+	fmt.Printf(
+		"Migrating apps to %s as %s...\n",
+		terminal.EntityNameColor(runtime),
+		terminal.EntityNameColor(username),
+	)
 
 	if err := verifyLoggedIn(cliConnection); err != nil {
 		exitWithError(err, []string{})
@@ -304,13 +315,6 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 	}
 
 	diegoSupport := diego_support.NewDiegoSupport(cliConnection)
-
-	var runtime string
-	if enableDiego {
-		runtime = "Diego"
-	} else {
-		runtime = "DEA"
-	}
 
 	warnings := 0
 	for _, app := range apps {
