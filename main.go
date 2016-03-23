@@ -92,66 +92,14 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
 		c.isDiegoEnabled(cliConnection, args[1])
 	} else if args[0] == "diego-apps" {
-		var opts struct {
-			Organization string `short:"o"`
-		}
-
-		_, err := flags.ParseArgs(&opts, args)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-
-		diegoAppsCommand := commands.DiegoAppsCommand{}
-		if opts.Organization != "" {
-			org, err := cliConnection.GetOrg(opts.Organization)
-			if err != nil {
-				exitWithError(err, []string{})
-			}
-			diegoAppsCommand.OrganizationGuid = org.Guid
-		}
-
+		diegoAppsCommand := parseArgs(cliConnection, args)
 		c.showApps(cliConnection, diegoAppsCommand.DiegoApps)
 	} else if args[0] == "dea-apps" {
-		var opts struct {
-			Organization string `short:"o"`
-		}
-
-		_, err := flags.ParseArgs(&opts, args)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-
-		diegoAppsCommand := commands.DiegoAppsCommand{}
-		if opts.Organization != "" {
-			org, err := cliConnection.GetOrg(opts.Organization)
-			if err != nil {
-				exitWithError(err, []string{})
-			}
-			diegoAppsCommand.OrganizationGuid = org.Guid
-		}
-
+		diegoAppsCommand := parseArgs(cliConnection, args)
 		c.showApps(cliConnection, diegoAppsCommand.DeaApps)
 	} else if args[0] == "migrate-apps" && len(args) >= 2 {
-		var opts struct {
-			Organization string `short:"o"`
-		}
-
-		_, err := flags.ParseArgs(&opts, args)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-
-		diegoAppsCommand := commands.DiegoAppsCommand{}
-		if opts.Organization != "" {
-			org, err := cliConnection.GetOrg(opts.Organization)
-			if err != nil {
-				exitWithError(err, []string{})
-			}
-			diegoAppsCommand.OrganizationGuid = org.Guid
-		}
-
+		diegoAppsCommand := parseArgs(cliConnection, args)
 		runtime := strings.ToLower(args[1])
-
 		if runtime == "diego" {
 			c.migrateApps(cliConnection, diegoAppsCommand.DeaApps, true)
 		} else if runtime == "dea" {
@@ -162,6 +110,27 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	} else {
 		c.showUsage(args)
 	}
+}
+
+func parseArgs(cliConnection plugin.CliConnection, args []string) commands.DiegoAppsCommand {
+	var opts struct {
+		Organization string `short:"o"`
+	}
+
+	_, err := flags.ParseArgs(&opts, args)
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	diegoAppsCommand := commands.DiegoAppsCommand{}
+	if opts.Organization != "" {
+		org, err := cliConnection.GetOrg(opts.Organization)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+		diegoAppsCommand.OrganizationGuid = org.Guid
+	}
+	return diegoAppsCommand
 }
 
 func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error)) {
