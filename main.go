@@ -21,6 +21,7 @@ import (
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jessevdk/go-flags"
+	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
 
 type DiegoEnabler struct{}
@@ -95,18 +96,31 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
 		c.isDiegoEnabled(cliConnection, args[1])
 	} else if args[0] == "diego-apps" {
-		diegoAppsCommand := parseArgs(cliConnection, args)
+		diegoAppsCommand, _ := parseArgs(cliConnection, args)
 		c.showApps(cliConnection, diegoAppsCommand.DiegoApps)
 	} else if args[0] == "dea-apps" {
-		diegoAppsCommand := parseArgs(cliConnection, args)
+		diegoAppsCommand, _ := parseArgs(cliConnection, args)
 		c.showApps(cliConnection, diegoAppsCommand.DeaApps)
 	} else if args[0] == "migrate-apps" && len(args) >= 2 {
-		diegoAppsCommand := parseArgs(cliConnection, args)
+		username, err := cliConnection.Username()
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+
+		diegoAppsCommand, opts := parseArgs(cliConnection, args)
+
+		cmd := &ui.MigrateAppsCommand{
+			Username: username,
+		}
+
 		runtime := strings.ToLower(args[1])
+
+		cmd.Organization = opts.Organization
+		cmd.Runtime = ui.Runtime(runtime)
 		if runtime == "diego" {
-			c.migrateApps(cliConnection, diegoAppsCommand.DeaApps, true)
+			c.migrateApps(cliConnection, diegoAppsCommand.DeaApps, true, cmd)
 		} else if runtime == "dea" {
-			c.migrateApps(cliConnection, diegoAppsCommand.DiegoApps, false)
+			c.migrateApps(cliConnection, diegoAppsCommand.DiegoApps, false, cmd)
 		} else {
 			c.showUsage(args)
 		}
@@ -115,10 +129,12 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	}
 }
 
-func parseArgs(cliConnection plugin.CliConnection, args []string) commands.DiegoAppsCommand {
-	var opts struct {
-		Organization string `short:"o"`
-	}
+type Opts struct {
+	Organization string `short:"o"`
+}
+
+func parseArgs(cliConnection plugin.CliConnection, args []string) (commands.DiegoAppsCommand, Opts) {
+	var opts Opts
 
 	_, err := flags.ParseArgs(&opts, args)
 	if err != nil {
@@ -133,7 +149,7 @@ func parseArgs(cliConnection plugin.CliConnection, args []string) commands.Diego
 		}
 		diegoAppsCommand.OrganizationGuid = org.Guid
 	}
-	return diegoAppsCommand
+	return diegoAppsCommand, opts
 }
 
 func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error)) {
@@ -224,29 +240,19 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 	t := terminal.NewTable(ui, headers)
 
 	for _, app := range apps {
-		t.Add(app.Name, spaceDisplayFor(app, spaceMap), orgDisplayFor(app, spaceMap))
+		a := &appPrinter{
+			app: app,
+			spaces: spaceMap,
+		}
+
+		t.Add(a.Name(), a.Space(), a.Organization())
 	}
 
 	t.Print()
 }
 
-func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool) {
-	username, err := cliConnection.Username()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	var runtime string
-	if enableDiego {
-		runtime = "Diego"
-	} else {
-		runtime = "DEA"
-	}
-	fmt.Printf(
-		"Migrating apps to %s as %s...\n",
-		terminal.EntityNameColor(runtime),
-		terminal.EntityNameColor(username),
-	)
+func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool, p *ui.MigrateAppsCommand) {
+	p.BeforeAll()
 
 	if err := verifyLoggedIn(cliConnection); err != nil {
 		exitWithError(err, []string{})
@@ -318,18 +324,12 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 
 	warnings := 0
 	for _, app := range apps {
-		fmt.Println()
-		orgName := orgDisplayFor(app, spaceMap)
-		spaceName := spaceDisplayFor(app, spaceMap)
+		a := &appPrinter{
+			app: app,
+			spaces: spaceMap,
+		}
 
-		fmt.Printf(
-			"Migrating app %s in org %s / space %s to %s as %s...\n",
-			terminal.EntityNameColor(app.Name),
-			terminal.EntityNameColor(orgName),
-			terminal.EntityNameColor(spaceName),
-			terminal.EntityNameColor(runtime),
-			terminal.EntityNameColor(username),
-		)
+		p.BeforeEach(a)
 
 		var waitTime time.Duration
 		if app.State == models.Started {
@@ -339,7 +339,7 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 				t, err := strconv.Atoi(timeout)
 
 				if err == nil {
-					waitTime = time.Duration(float32(t) / 5.0 * 60.0) * time.Second
+					waitTime = time.Duration(float32(t)/5.0*60.0) * time.Second
 				}
 			}
 		}
@@ -356,45 +356,32 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 		printDot := time.NewTicker(5 * time.Second)
 		go func() {
 			for range printDot.C {
-				fmt.Print(".")
+				p.DuringEach(a)
 			}
 		}()
 		time.Sleep(waitTime)
 		printDot.Stop()
 
-		fmt.Println()
-		fmt.Printf(
-			"Completed migrating app %s in org %s / space %s to %s as %s...\n",
-			terminal.EntityNameColor(app.Name),
-			terminal.EntityNameColor(orgName),
-			terminal.EntityNameColor(spaceName),
-			terminal.EntityNameColor(runtime),
-			terminal.EntityNameColor(username),
-		)
+		p.CompletedEach(a)
 	}
 
-	fmt.Println()
-	fmt.Printf("Migration to %s completed: %d apps, %d warnings\n", terminal.EntityNameColor(runtime), len(apps), warnings)
+	p.AfterAll(len(apps), warnings)
 }
 
-func spaceDisplayFor(app models.Application, spaces map[string]models.Space) string {
-	var display string
 
-	if len(spaces) == 0 {
-		display = app.SpaceGuid
-	} else {
-		space, ok := spaces[app.SpaceGuid]
-		if ok {
-			display = space.Name
-		} else {
-			display = app.SpaceGuid
-		}
-	}
-
-	return display
+type appPrinter struct{
+	app models.Application
+	spaces map[string]models.Space
 }
 
-func orgDisplayFor(app models.Application, spaces map[string]models.Space) string {
+func (a *appPrinter) Name() string {
+	return a.app.Name
+}
+
+func (a *appPrinter) Organization() string {
+	spaces := a.spaces
+	app := a.app
+
 	if len(spaces) == 0 {
 		return ""
 	}
@@ -409,6 +396,25 @@ func orgDisplayFor(app models.Application, spaces map[string]models.Space) strin
 	}
 
 	return space.OrganizationGuid
+}
+
+func (a *appPrinter) Space() string {
+	var display string
+	spaces := a.spaces
+	app := a.app
+
+	if len(spaces) == 0 {
+		display = app.SpaceGuid
+	} else {
+		space, ok := spaces[app.SpaceGuid]
+		if ok {
+			display = space.Name
+		} else {
+			display = app.SpaceGuid
+		}
+	}
+
+	return display
 }
 
 func (c *DiegoEnabler) showUsage(args []string) {
