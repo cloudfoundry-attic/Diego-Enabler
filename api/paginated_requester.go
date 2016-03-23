@@ -73,12 +73,3 @@ func (p *PaginatedRequester) Do(filter Filter, params map[string]interface{}) ([
 
 	return responseBodies, nil
 }
-
-func paginatedRequester(requestFactory RequestFactory, filter Filter, params map[string]interface{}, client CloudControllerClient, pageParser PaginatedParser) ([][]byte, error) {
-	requester := &PaginatedRequester{
-		RequestFactory: requestFactory,
-		Client:         client,
-		PageParser:     pageParser,
-	}
-	return requester.Do(filter, params)
-}
