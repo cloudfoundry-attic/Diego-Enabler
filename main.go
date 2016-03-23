@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
@@ -182,8 +182,8 @@ func parseArgs(args []string) Opts {
 	return opts
 }
 
-func newDiegoAppsCommand(cliConnection plugin.CliConnection, opts Opts) commands.DiegoAppsCommand {
-	diegoAppsCommand := commands.DiegoAppsCommand{}
+func newDiegoAppsCommand(cliConnection plugin.CliConnection, opts Opts) thingdoer.DiegoAppsCommand {
+	diegoAppsCommand := thingdoer.DiegoAppsCommand{}
 	if opts.Organization != "" {
 		org, err := cliConnection.GetOrg(opts.Organization)
 		if err != nil {
@@ -194,7 +194,7 @@ func newDiegoAppsCommand(cliConnection plugin.CliConnection, opts Opts) commands
 	return diegoAppsCommand
 }
 
-func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), p *ui.ListAppsCommand) {
+func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(thingdoer.ApplicationsParser, thingdoer.PaginatedRequester) (models.Applications, error), p *ui.ListAppsCommand) {
 	if err := verifyLoggedIn(cliConnection); err != nil {
 		exitWithError(err, []string{})
 	}
@@ -246,7 +246,7 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 		apiClient.Authorize(apiClient.NewGetSpacesRequest),
 	)
 
-	spaces, err := commands.Spaces(
+	spaces, err := thingdoer.Spaces(
 		spacesParser,
 		&api.PaginatedRequester{
 			RequestFactory: spaceRequestFactory,
@@ -274,7 +274,7 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 	p.AfterAll(appPrinters)
 }
 
-func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool, p *ui.MigrateAppsCommand) {
+func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(thingdoer.ApplicationsParser, thingdoer.PaginatedRequester) (models.Applications, error), enableDiego bool, p *ui.MigrateAppsCommand) {
 	p.BeforeAll()
 
 	if err := verifyLoggedIn(cliConnection); err != nil {
@@ -326,7 +326,7 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 		apiClient.Authorize(apiClient.NewGetSpacesRequest),
 	)
 
-	spaces, err := commands.Spaces(
+	spaces, err := thingdoer.Spaces(
 		spacesParser,
 		&api.PaginatedRequester{
 			RequestFactory: spaceRequestFactory,

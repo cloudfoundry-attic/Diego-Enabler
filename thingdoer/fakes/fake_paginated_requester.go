@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 )
 
 type FakePaginatedRequester struct {
@@ -55,4 +55,4 @@ func (fake *FakePaginatedRequester) DoReturns(result1 [][]byte, result2 error) {
 	}{result1, result2}
 }
 
-var _ commands.PaginatedRequester = new(FakePaginatedRequester)
+var _ thingdoer.PaginatedRequester = new(FakePaginatedRequester)

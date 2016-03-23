@@ -1,12 +1,12 @@
-package commands_test
+package thingdoer_test
 
 import (
 	"errors"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/fakes"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -17,14 +17,14 @@ var _ = Describe("DiegoApps", func() {
 		fakeApplicationsParser *fakes.FakeApplicationsParser
 		apps                   models.Applications
 
-		command commands.DiegoAppsCommand
+		command thingdoer.DiegoAppsCommand
 		err     error
 	)
 
 	BeforeEach(func() {
 		fakePaginatedRequester = new(fakes.FakePaginatedRequester)
 		fakeApplicationsParser = new(fakes.FakeApplicationsParser)
-		command = commands.DiegoAppsCommand{}
+		command = thingdoer.DiegoAppsCommand{}
 	})
 
 	JustBeforeEach(func() {

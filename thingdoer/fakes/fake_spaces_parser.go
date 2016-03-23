@@ -4,8 +4,8 @@ package fakes
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 )
 
 type FakeSpacesParser struct {
@@ -53,4 +53,4 @@ func (fake *FakeSpacesParser) ParseReturns(result1 models.Spaces, result2 error)
 	}{result1, result2}
 }
 
-var _ commands.SpacesParser = new(FakeSpacesParser)
+var _ thingdoer.SpacesParser = new(FakeSpacesParser)
