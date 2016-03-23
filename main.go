@@ -10,6 +10,9 @@ import (
 
 	"strings"
 
+	"strconv"
+	"time"
+
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
@@ -324,6 +327,19 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 			terminal.EntityNameColor(username),
 		)
 
+		var waitTime time.Duration
+		if app.State == models.Started {
+			waitTime = 1 * time.Minute
+			timeout := os.Getenv("CF_STARTUP_TIMEOUT")
+			if timeout != "" {
+				t, err := strconv.Atoi(timeout)
+
+				if err == nil {
+					waitTime = time.Duration(float32(t) / 5.0 * 60.0) * time.Second
+				}
+			}
+		}
+
 		_, err := diegoSupport.SetDiegoFlag(app.Guid, enableDiego)
 		if err != nil {
 			warnings += 1
@@ -333,6 +349,16 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 			continue
 		}
 
+		printDot := time.NewTicker(5 * time.Second)
+		go func() {
+			for range printDot.C {
+				fmt.Print(".")
+			}
+		}()
+		time.Sleep(waitTime)
+		printDot.Stop()
+
+		fmt.Println()
 		fmt.Printf(
 			"Completed migrating app %s in org %s / space %s to %s as %s...\n",
 			terminal.EntityNameColor(app.Name),
