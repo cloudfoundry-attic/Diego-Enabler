@@ -8,6 +8,11 @@ type ApplicationMetadata struct {
 	Guid string `json:"guid"`
 }
 
+const (
+	Started = "STARTED"
+	Stopped = "STOPPED"
+)
+
 type ApplicationEntity struct {
 	Name string `json:"name"`
 	//BuildpackUrl         string
@@ -20,7 +25,7 @@ type ApplicationEntity struct {
 	//Memory               int64 // in Megabytes
 	//RunningInstances     int
 	//HealthCheckTimeout   int
-	//State                string
+	State     string `json:"state"`
 	SpaceGuid string `json:"space_guid"`
 	//PackageUpdatedAt     *time.Time
 	//PackageState         string

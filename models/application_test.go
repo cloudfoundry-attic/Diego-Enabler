@@ -79,7 +79,7 @@ var _ = Describe("Application", func() {
             "memory": 256,
             "instances": 10,
             "disk_quota": 1024,
-            "state": "STARTED",
+            "state": "STOPPED",
             "version": "5fae953a-8ef2-4a06-9a6b-e2ff38f2de60",
             "command": null,
             "console": false,
@@ -118,6 +118,7 @@ var _ = Describe("Application", func() {
 			Expect(applications[1].Name).To(Equal("myapp"))
 			Expect(applications[0].SpaceGuid).To(Equal("1f7ac3a5-6f4e-4d6c-8edd-ce694fc8c907"))
 			Expect(applications[0].Guid).To(Equal("b2ba6466-23f7-4f90-935b-4da1c87b8943"))
+			Expect(applications[0].State).To(Equal(Started))
 		})
 	})
 })
