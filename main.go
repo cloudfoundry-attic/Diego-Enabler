@@ -63,7 +63,7 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 				Name:     "dea-apps",
 				HelpText: "Lists all apps running on the DEA runtime that are visible to the user",
 				UsageDetails: plugin.Usage{
-					Usage: "cf dea-apps",
+					Usage: "cf dea-apps [-o ORG]",
 				},
 			},
 			{
@@ -111,8 +111,26 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		}
 
 		c.showApps(cliConnection, diegoAppsCommand.DiegoApps)
-	} else if args[0] == "dea-apps" && len(args) == 1 {
-		c.showApps(cliConnection, commands.DeaApps)
+	} else if args[0] == "dea-apps" {
+		var opts struct {
+			Organization string `short:"o"`
+		}
+
+		_, err := flags.ParseArgs(&opts, args)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+
+		diegoAppsCommand := commands.DiegoAppsCommand{}
+		if opts.Organization != "" {
+			org, err := cliConnection.GetOrg(opts.Organization)
+			if err != nil {
+				exitWithError(err, []string{})
+			}
+			diegoAppsCommand.OrganizationGuid = org.Guid
+		}
+
+		c.showApps(cliConnection, diegoAppsCommand.DeaApps)
 	} else if args[0] == "migrate-apps" && len(args) == 2 {
 		runtime := strings.ToLower(args[1])
 
@@ -223,11 +241,15 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 }
 
 func (c *DiegoEnabler) migrateAppsToDiego(cliConnection plugin.CliConnection) {
-	c.migrateApps(cliConnection, commands.DeaApps, true)
+	command := commands.DiegoAppsCommand{}
+
+	c.migrateApps(cliConnection, command.DeaApps, true)
 }
 
 func (c *DiegoEnabler) migrateAppsToDea(cliConnection plugin.CliConnection) {
-	c.migrateApps(cliConnection, commands.DiegoAppsCommand{}.DiegoApps, false)
+	command := commands.DiegoAppsCommand{}
+
+	c.migrateApps(cliConnection, command.DiegoApps, false)
 }
 
 func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), enableDiego bool) {

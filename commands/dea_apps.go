@@ -5,12 +5,24 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
-func DeaApps(appsParser ApplicationsParser, paginatedRequester PaginatedRequester) (models.Applications, error) {
+func (c DiegoAppsCommand) DeaApps(appsParser ApplicationsParser, paginatedRequester PaginatedRequester) (models.Applications, error) {
 	var noApps models.Applications
 
-	filter := api.EqualFilter{
-		Name:  "diego",
-		Value: false,
+	filter := api.Filters{
+		api.EqualFilter{
+			Name:  "diego",
+			Value: false,
+		},
+	}
+
+	if c.OrganizationGuid != "" {
+		filter = append(
+			filter,
+			api.EqualFilter{
+				Name:  "organization_guid",
+				Value: c.OrganizationGuid,
+			},
+		)
 	}
 
 	params := map[string]interface{}{}
