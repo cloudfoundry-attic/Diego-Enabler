@@ -60,14 +60,20 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 				Name:     "diego-apps",
 				HelpText: "Lists all apps running on the Diego runtime that are visible to the user",
 				UsageDetails: plugin.Usage{
-					Usage: "cf diego-apps [-o ORG]",
+					Usage: `cf diego-apps [-o ORG]
+
+OPTIONS:
+   -o      Organization to restrict the app migration to`,
 				},
 			},
 			{
 				Name:     "dea-apps",
 				HelpText: "Lists all apps running on the DEA runtime that are visible to the user",
 				UsageDetails: plugin.Usage{
-					Usage: "cf dea-apps [-o ORG]",
+					Usage: `cf dea-apps [-o ORG]
+
+OPTIONS:
+   -o      Organization to restrict the app migration to`,
 				},
 			},
 			{
