@@ -17,11 +17,11 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
+	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jessevdk/go-flags"
-	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
 
 type DiegoEnabler struct{}
@@ -96,68 +96,30 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
 		c.isDiegoEnabled(cliConnection, args[1])
 	} else if args[0] == "diego-apps" {
-		username, err := cliConnection.Username()
-		if err != nil {
-			exitWithError(err, []string{})
-		}
+		opts := parseArgs(args)
+		diegoAppsCommand := newDiegoAppsCommand(cliConnection, opts)
+		listAppsCommand := newListAppsCommand(cliConnection, opts)
+		listAppsCommand.Runtime = ui.Runtime("diego")
 
-		traceEnv := os.Getenv("CF_TRACE")
-		traceLogger := trace.NewLogger(false, traceEnv, "")
-		tUI := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
-
-		runtime := "diego"
-		diegoAppsCommand, opts := parseArgs(cliConnection, args)
-		cmd := &ui.ListAppsCommand{
-			Username: username,
-			Runtime: ui.Runtime(runtime),
-			Organization: opts.Organization,
-			UI: tUI,
-		}
-
-		c.showApps(cliConnection, diegoAppsCommand.DiegoApps, cmd)
+		c.showApps(cliConnection, diegoAppsCommand.DiegoApps, listAppsCommand)
 	} else if args[0] == "dea-apps" {
-		username, err := cliConnection.Username()
-		if err != nil {
-			exitWithError(err, []string{})
-		}
+		opts := parseArgs(args)
+		diegoAppsCommand := newDiegoAppsCommand(cliConnection, opts)
+		listAppsCommand := newListAppsCommand(cliConnection, opts)
+		listAppsCommand.Runtime = ui.Runtime("dea")
 
-		traceEnv := os.Getenv("CF_TRACE")
-		traceLogger := trace.NewLogger(false, traceEnv, "")
-		tUI := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
-
-		runtime := "dea"
-
-		diegoAppsCommand, opts := parseArgs(cliConnection, args)
-
-		cmd := &ui.ListAppsCommand{
-			Username: username,
-			UI: tUI,
-		}
-
-		cmd.Runtime = ui.Runtime(runtime)
-		cmd.Organization = opts.Organization
-
-		c.showApps(cliConnection, diegoAppsCommand.DeaApps, cmd)
+		c.showApps(cliConnection, diegoAppsCommand.DeaApps, listAppsCommand)
 	} else if args[0] == "migrate-apps" && len(args) >= 2 {
-		username, err := cliConnection.Username()
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-
-		diegoAppsCommand, opts := parseArgs(cliConnection, args)
-
-		cmd := &ui.MigrateAppsCommand{
-			Username: username,
-		}
+		opts := parseArgs(args)
+		diegoAppsCommand := newDiegoAppsCommand(cliConnection, opts)
 
 		runtime := strings.ToLower(args[1])
+		migrateAppsCommand := newMigrateAppsCommand(cliConnection, opts, runtime)
 
-		cmd.Organization = opts.Organization
-		cmd.Runtime = ui.Runtime(runtime)
 		if runtime == "diego" {
-			c.migrateApps(cliConnection, diegoAppsCommand.DeaApps, true, cmd)
+			c.migrateApps(cliConnection, diegoAppsCommand.DeaApps, true, migrateAppsCommand)
 		} else if runtime == "dea" {
-			c.migrateApps(cliConnection, diegoAppsCommand.DiegoApps, false, cmd)
+			c.migrateApps(cliConnection, diegoAppsCommand.DiegoApps, false, migrateAppsCommand)
 		} else {
 			c.showUsage(args)
 		}
@@ -166,11 +128,44 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	}
 }
 
+func newListAppsCommand(cliConnection plugin.CliConnection, opts Opts) *ui.ListAppsCommand {
+	username, err := cliConnection.Username()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	traceEnv := os.Getenv("CF_TRACE")
+	traceLogger := trace.NewLogger(false, traceEnv, "")
+	tUI := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
+
+	cmd := &ui.ListAppsCommand{
+		Username:     username,
+		Organization: opts.Organization,
+		UI:           tUI,
+	}
+	return cmd
+}
+
+func newMigrateAppsCommand(cliConnection plugin.CliConnection, opts Opts, runtime string) *ui.MigrateAppsCommand {
+	username, err := cliConnection.Username()
+	if err != nil {
+		exitWithError(err, []string{})
+	}
+
+	cmd := &ui.MigrateAppsCommand{
+		Username:     username,
+		Organization: opts.Organization,
+		Runtime:      ui.Runtime(runtime),
+	}
+
+	return cmd
+}
+
 type Opts struct {
 	Organization string `short:"o"`
 }
 
-func parseArgs(cliConnection plugin.CliConnection, args []string) (commands.DiegoAppsCommand, Opts) {
+func parseArgs(args []string) Opts {
 	var opts Opts
 
 	_, err := flags.ParseArgs(&opts, args)
@@ -178,6 +173,10 @@ func parseArgs(cliConnection plugin.CliConnection, args []string) (commands.Dieg
 		exitWithError(err, []string{})
 	}
 
+	return opts
+}
+
+func newDiegoAppsCommand(cliConnection plugin.CliConnection, opts Opts) commands.DiegoAppsCommand {
 	diegoAppsCommand := commands.DiegoAppsCommand{}
 	if opts.Organization != "" {
 		org, err := cliConnection.GetOrg(opts.Organization)
@@ -186,7 +185,7 @@ func parseArgs(cliConnection plugin.CliConnection, args []string) (commands.Dieg
 		}
 		diegoAppsCommand.OrganizationGuid = org.Guid
 	}
-	return diegoAppsCommand, opts
+	return diegoAppsCommand
 }
 
 func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(commands.ApplicationsParser, commands.PaginatedRequester) (models.Applications, error), p *ui.ListAppsCommand) {
@@ -261,7 +260,7 @@ func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter f
 	var appPrinters []ui.ApplicationPrinter
 	for _, a := range apps {
 		appPrinters = append(appPrinters, &appPrinter{
-			app: a,
+			app:    a,
 			spaces: spaceMap,
 		})
 	}
@@ -343,7 +342,7 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 	warnings := 0
 	for _, app := range apps {
 		a := &appPrinter{
-			app: app,
+			app:    app,
 			spaces: spaceMap,
 		}
 
@@ -386,9 +385,8 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 	p.AfterAll(len(apps), warnings)
 }
 
-
-type appPrinter struct{
-	app models.Application
+type appPrinter struct {
+	app    models.Application
 	spaces map[string]models.Space
 }
 
