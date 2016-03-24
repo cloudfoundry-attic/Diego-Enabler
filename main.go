@@ -185,8 +185,8 @@ func NewAppsGetterFunc(cliConnection plugin.CliConnection, orgName string, runti
 	diegoAppsCommand := thingdoer.AppsGetter{}
 	if orgName != "" {
 		org, err := cliConnection.GetOrg(orgName)
-		if err != nil {
-			return nil, OrgNotFound(orgName, err)
+		if err != nil || org.Guid == "" {
+			return nil, OrgNotFound(orgName)
 		}
 		diegoAppsCommand.OrganizationGuid = org.Guid
 	}

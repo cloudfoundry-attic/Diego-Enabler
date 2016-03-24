@@ -16,8 +16,8 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-func OrgNotFound(org string, err error) error {
-	return fmt.Errorf("Organization not found: %s, %+v", org, err)
+func OrgNotFound(org string) error {
+	return fmt.Errorf("Organization not found: %s", org)
 }
 
 type ListApps struct {
