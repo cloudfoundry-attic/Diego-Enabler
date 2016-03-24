@@ -58,41 +58,24 @@ func PrepareMigrateApps(args []string, cliConnection plugin.CliConnection) (Migr
 func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 	cmd.migrateAppsCommand.BeforeAll()
 
-	if err := verifyLoggedIn(cliConnection); err != nil {
-		return err
-	}
-
-	accessToken, err := cliConnection.AccessToken()
-	if err != nil {
-		return err
-	}
-
-	pageParser := api.PageParser{}
-	appsParser := models.ApplicationsParser{}
-	spacesParser := models.SpacesParser{}
-
-	apiEndpoint, err := cliConnection.ApiEndpoint()
-	if err != nil {
-		return err
-	}
-
-	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
-	if err != nil {
-		return err
-	}
-
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
 
+	apiClient, err := newAPIClient(cliConnection)
+	if err != nil {
+		return err
+	}
+
 	appRequestFactory := apiClient.HandleFiltersAndParameters(
 		apiClient.Authorize(apiClient.NewGetAppsRequest),
 	)
 
+	pageParser := api.PageParser{}
 	apps, err := cmd.appsGetterFunc(
-		appsParser,
+		models.ApplicationsParser{},
 		&api.PaginatedRequester{
 			RequestFactory: appRequestFactory,
 			Client:         httpClient,
@@ -108,7 +91,7 @@ func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 	)
 
 	spaces, err := thingdoer.Spaces(
-		spacesParser,
+		models.SpacesParser{},
 		&api.PaginatedRequester{
 			RequestFactory: spaceRequestFactory,
 			Client:         httpClient,
@@ -124,9 +107,53 @@ func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 		spaceMap[space.Guid] = space
 	}
 
+  warnings := cmd.migrateApps(cliConnection, apps, spaceMap)
+	cmd.migrateAppsCommand.AfterAll(len(apps), warnings)
+
+	return nil
+}
+
+func newMigrateAppsCommand(cliConnection plugin.CliConnection, opts Opts, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
+	username, err := cliConnection.Username()
+	if err != nil {
+		return ui.MigrateAppsCommand{}, err
+	}
+
+	return ui.MigrateAppsCommand{
+		Username:     username,
+		Organization: opts.Organization,
+		Runtime:      runtime,
+	}, nil
+}
+
+func newAPIClient(cliConnection plugin.CliConnection) (*api.ApiClient, error) {
+
+	if err := verifyLoggedIn(cliConnection); err != nil {
+		return nil, err
+	}
+
+	accessToken, err := cliConnection.AccessToken()
+	if err != nil {
+		return nil, err
+	}
+
+	apiEndpoint, err := cliConnection.ApiEndpoint()
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiClient, nil
+}
+
+func (cmd *MigrateApps) migrateApps(cliConnection plugin.CliConnection, apps models.Applications, spaceMap map[string]models.Space) int {
+	warnings := 0
 	diegoSupport := diego_support.NewDiegoSupport(cliConnection)
 
-	warnings := 0
 	for _, app := range apps {
 		a := &appPrinter{
 			app:    app,
@@ -169,19 +196,5 @@ func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 		cmd.migrateAppsCommand.CompletedEach(a)
 	}
 
-	cmd.migrateAppsCommand.AfterAll(len(apps), warnings)
-	return nil
-}
-
-func newMigrateAppsCommand(cliConnection plugin.CliConnection, opts Opts, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
-	username, err := cliConnection.Username()
-	if err != nil {
-		return ui.MigrateAppsCommand{}, err
-	}
-
-	return ui.MigrateAppsCommand{
-		Username:     username,
-		Organization: opts.Organization,
-		Runtime:      runtime,
-	}, nil
+	return warnings
 }
