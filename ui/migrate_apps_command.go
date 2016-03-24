@@ -44,7 +44,7 @@ func (c *MigrateAppsCommand) BeforeEach(app ApplicationPrinter) {
 func (c *MigrateAppsCommand) CompletedEach(app ApplicationPrinter) {
 	fmt.Println()
 	fmt.Printf(
-		"Completed migrating app %s in org %s / space %s to %s as %s...\n",
+		"Completed migrating app %s in org %s / space %s to %s as %s\n",
 		terminal.EntityNameColor(app.Name()),
 		terminal.EntityNameColor(app.Organization()),
 		terminal.EntityNameColor(app.Space()),

@@ -380,13 +380,17 @@ func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGette
 		}
 
 		printDot := time.NewTicker(5 * time.Second)
-		go func() {
-			for range printDot.C {
+		endDot := time.After(waitTime)
+	dance:
+		for {
+			select {
+			case <-endDot:
+				printDot.Stop()
+				break dance
+			case <-printDot.C:
 				p.DuringEach(a)
 			}
-		}()
-		time.Sleep(waitTime)
-		printDot.Stop()
+		}
 
 		p.CompletedEach(a)
 	}
