@@ -83,7 +83,10 @@ OPTIONS:
 					Usage: `cf migrate-apps (diego | dea) [-o ORG]
 
 WARNING:
-   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
+   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.
+
+OPTIONS:
+   -o      Organization to restrict the app migration to`,
 				},
 			},
 		},
