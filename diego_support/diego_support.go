@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
-
-	"github.com/cloudfoundry/cli/plugin"
 )
 
+//go:generate counterfeiter . CliConnection
+type CliConnection interface {
+	CliCommandWithoutTerminalOutput(args ...string) ([]string, error)
+}
+
 type DiegoSupport struct {
-	cli plugin.CliConnection
+	cli CliConnection
 }
 
 type diegoError struct {
@@ -18,7 +21,7 @@ type diegoError struct {
 	ErrorCode   string `json:"error_code,omitempty"`
 }
 
-func NewDiegoSupport(cli plugin.CliConnection) *DiegoSupport {
+func NewDiegoSupport(cli CliConnection) *DiegoSupport {
 	return &DiegoSupport{
 		cli: cli,
 	}

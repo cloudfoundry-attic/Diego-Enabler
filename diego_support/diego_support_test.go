@@ -3,9 +3,8 @@ package diego_support_test
 import (
 	"errors"
 
-	"github.com/cloudfoundry/cli/plugin/fakes"
-
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
+	"github.com/cloudfoundry-incubator/diego-enabler/diego_support/fakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
