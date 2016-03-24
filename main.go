@@ -5,23 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"crypto/tls"
-	"net/http"
-
-	"strings"
-
-	"strconv"
-	"time"
-
-	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
-	"github.com/cloudfoundry/cli/cf/terminal"
-	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/jessevdk/go-flags"
 )
 
 type DiegoEnabler struct{}
@@ -102,293 +90,47 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
 		c.isDiegoEnabled(cliConnection, args[1])
 	} else if args[0] == "diego-apps" {
-		opts := parseArgs(args)
-		diegoAppsCommand := newDiegoAppsCommand(cliConnection, opts)
-		listAppsCommand := newListAppsCommand(cliConnection, opts)
-		listAppsCommand.Runtime = ui.Runtime("diego")
+		opts := []string{"diego"}
+		cmd, err := PrepareListApps(append(opts, args[1:]...), cliConnection)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
 
-		c.showApps(cliConnection, diegoAppsCommand.DiegoApps, listAppsCommand)
+		err = cmd.Execute(cliConnection)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
 	} else if args[0] == "dea-apps" {
-		opts := parseArgs(args)
-		diegoAppsCommand := newDiegoAppsCommand(cliConnection, opts)
-		listAppsCommand := newListAppsCommand(cliConnection, opts)
-		listAppsCommand.Runtime = ui.Runtime("dea")
+		opts := []string{"dea"}
+		cmd, err := PrepareListApps(append(opts, args[1:]...), cliConnection)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
 
-		c.showApps(cliConnection, diegoAppsCommand.DeaApps, listAppsCommand)
-	} else if args[0] == "migrate-apps" && len(args) >= 2 {
-		opts := parseArgs(args)
-		diegoAppsCommand := newDiegoAppsCommand(cliConnection, opts)
-
-		runtime := strings.ToLower(args[1])
-		migrateAppsCommand := newMigrateAppsCommand(cliConnection, opts, runtime)
-
-		if runtime == "diego" {
-			c.migrateApps(cliConnection, diegoAppsCommand.DeaApps, true, migrateAppsCommand)
-		} else if runtime == "dea" {
-			c.migrateApps(cliConnection, diegoAppsCommand.DiegoApps, false, migrateAppsCommand)
-		} else {
-			c.showUsage(args)
+		err = cmd.Execute(cliConnection)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+	} else if args[0] == "migrate-apps" {
+		cmd, err := PrepareMigrateApps(args[1:], cliConnection)
+		if err != nil {
+			exitWithError(err, []string{})
+		}
+		err = cmd.Execute(cliConnection)
+		if err != nil {
+			exitWithError(err, []string{})
 		}
 	} else {
 		c.showUsage(args)
 	}
 }
 
-func newListAppsCommand(cliConnection plugin.CliConnection, opts Opts) *ui.ListAppsCommand {
-	username, err := cliConnection.Username()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	traceEnv := os.Getenv("CF_TRACE")
-	traceLogger := trace.NewLogger(false, traceEnv, "")
-	tUI := terminal.NewUI(os.Stdin, terminal.NewTeePrinter(), traceLogger)
-
-	cmd := &ui.ListAppsCommand{
-		Username:     username,
-		Organization: opts.Organization,
-		UI:           tUI,
-	}
-	return cmd
-}
-
-func newMigrateAppsCommand(cliConnection plugin.CliConnection, opts Opts, runtime string) *ui.MigrateAppsCommand {
-	username, err := cliConnection.Username()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	cmd := &ui.MigrateAppsCommand{
-		Username:     username,
-		Organization: opts.Organization,
-		Runtime:      ui.Runtime(runtime),
-	}
-
-	return cmd
-}
-
-type Opts struct {
-	Organization string `short:"o"`
-}
-
-func parseArgs(args []string) Opts {
-	var opts Opts
-
-	_, err := flags.ParseArgs(&opts, args)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	return opts
-}
-
-func newDiegoAppsCommand(cliConnection plugin.CliConnection, opts Opts) thingdoer.DiegoAppsCommand {
-	diegoAppsCommand := thingdoer.DiegoAppsCommand{}
-	if opts.Organization != "" {
-		org, err := cliConnection.GetOrg(opts.Organization)
-		if err != nil {
-			exitWithError(err, []string{})
+func (c *DiegoEnabler) showUsage(args []string) {
+	for _, cmd := range c.GetMetadata().Commands {
+		if cmd.Name == args[0] {
+			fmt.Println("Invalid Usage: \n", cmd.UsageDetails.Usage)
 		}
-		diegoAppsCommand.OrganizationGuid = org.Guid
 	}
-	return diegoAppsCommand
-}
-
-func (c *DiegoEnabler) showApps(cliConnection plugin.CliConnection, appsGetter func(thingdoer.ApplicationsParser, thingdoer.PaginatedRequester) (models.Applications, error), p *ui.ListAppsCommand) {
-	if err := verifyLoggedIn(cliConnection); err != nil {
-		exitWithError(err, []string{})
-	}
-
-	accessToken, err := cliConnection.AccessToken()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	p.BeforeAll()
-
-	pageParser := api.PageParser{}
-	appsParser := models.ApplicationsParser{}
-	spacesParser := models.SpacesParser{}
-
-	apiEndpoint, err := cliConnection.ApiEndpoint()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	appRequestFactory := apiClient.HandleFiltersAndParameters(
-		apiClient.Authorize(apiClient.NewGetAppsRequest),
-	)
-
-	apps, err := appsGetter(
-		appsParser,
-		&api.PaginatedRequester{
-			RequestFactory: appRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
-	)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	spaceRequestFactory := apiClient.HandleFiltersAndParameters(
-		apiClient.Authorize(apiClient.NewGetSpacesRequest),
-	)
-
-	spaces, err := thingdoer.Spaces(
-		spacesParser,
-		&api.PaginatedRequester{
-			RequestFactory: spaceRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
-	)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	spaceMap := make(map[string]models.Space)
-	for _, space := range spaces {
-		spaceMap[space.Guid] = space
-	}
-
-	var appPrinters []ui.ApplicationPrinter
-	for _, a := range apps {
-		appPrinters = append(appPrinters, &appPrinter{
-			app:    a,
-			spaces: spaceMap,
-		})
-	}
-
-	p.AfterAll(appPrinters)
-}
-
-func (c *DiegoEnabler) migrateApps(cliConnection plugin.CliConnection, appsGetter func(thingdoer.ApplicationsParser, thingdoer.PaginatedRequester) (models.Applications, error), enableDiego bool, p *ui.MigrateAppsCommand) {
-	p.BeforeAll()
-
-	if err := verifyLoggedIn(cliConnection); err != nil {
-		exitWithError(err, []string{})
-	}
-
-	accessToken, err := cliConnection.AccessToken()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	pageParser := api.PageParser{}
-	appsParser := models.ApplicationsParser{}
-	spacesParser := models.SpacesParser{}
-
-	apiEndpoint, err := cliConnection.ApiEndpoint()
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	appRequestFactory := apiClient.HandleFiltersAndParameters(
-		apiClient.Authorize(apiClient.NewGetAppsRequest),
-	)
-
-	apps, err := appsGetter(
-		appsParser,
-		&api.PaginatedRequester{
-			RequestFactory: appRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
-	)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	spaceRequestFactory := apiClient.HandleFiltersAndParameters(
-		apiClient.Authorize(apiClient.NewGetSpacesRequest),
-	)
-
-	spaces, err := thingdoer.Spaces(
-		spacesParser,
-		&api.PaginatedRequester{
-			RequestFactory: spaceRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
-	)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	spaceMap := make(map[string]models.Space)
-	for _, space := range spaces {
-		spaceMap[space.Guid] = space
-	}
-
-	diegoSupport := diego_support.NewDiegoSupport(cliConnection)
-
-	warnings := 0
-	for _, app := range apps {
-		a := &appPrinter{
-			app:    app,
-			spaces: spaceMap,
-		}
-
-		p.BeforeEach(a)
-
-		var waitTime time.Duration
-		if app.State == models.Started {
-			waitTime = 1 * time.Minute
-			timeout := os.Getenv("CF_STARTUP_TIMEOUT")
-			if timeout != "" {
-				t, err := strconv.Atoi(timeout)
-
-				if err == nil {
-					waitTime = time.Duration(float32(t)/5.0*60.0) * time.Second
-				}
-			}
-		}
-
-		_, err := diegoSupport.SetDiegoFlag(app.Guid, enableDiego)
-		if err != nil {
-			warnings += 1
-			fmt.Println("Error: ", err)
-			fmt.Println("Continuing...")
-			// WARNING: No authorization to migrate app APP_NAME in org ORG_NAME / space SPACE_NAME to RUNTIME as PERSON...
-			continue
-		}
-
-		printDot := time.NewTicker(5 * time.Second)
-		go func() {
-			for range printDot.C {
-				p.DuringEach(a)
-			}
-		}()
-		time.Sleep(waitTime)
-		printDot.Stop()
-
-		p.CompletedEach(a)
-	}
-
-	p.AfterAll(len(apps), warnings)
 }
 
 type appPrinter struct {
@@ -439,12 +181,22 @@ func (a *appPrinter) Space() string {
 	return display
 }
 
-func (c *DiegoEnabler) showUsage(args []string) {
-	for _, cmd := range c.GetMetadata().Commands {
-		if cmd.Name == args[0] {
-			fmt.Println("Invalid Usage: \n", cmd.UsageDetails.Usage)
+func NewAppsGetterFunc(cliConnection plugin.CliConnection, orgName string, runtime ui.Runtime) (thingdoer.AppsGetterFunc, error) {
+	diegoAppsCommand := thingdoer.AppsGetter{}
+	if orgName != "" {
+		org, err := cliConnection.GetOrg(orgName)
+		if err != nil {
+			return nil, OrgNotFound(orgName, err)
 		}
+		diegoAppsCommand.OrganizationGuid = org.Guid
 	}
+
+	var appsGetterFunc = diegoAppsCommand.DiegoApps
+	if runtime == ui.DEA {
+		appsGetterFunc = diegoAppsCommand.DeaApps
+	}
+
+	return appsGetterFunc, nil
 }
 
 func (c *DiegoEnabler) toggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName string) {

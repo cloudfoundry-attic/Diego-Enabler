@@ -5,7 +5,7 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
-func (c DiegoAppsCommand) DeaApps(appsParser ApplicationsParser, paginatedRequester PaginatedRequester) (models.Applications, error) {
+func (c AppsGetter) DeaApps(appsParser ApplicationsParser, paginatedRequester PaginatedRequester) (models.Applications, error) {
 	var noApps models.Applications
 
 	filter := api.Filters{

@@ -17,14 +17,14 @@ var _ = Describe("DeaApps", func() {
 		fakeApplicationsParser *fakes.FakeApplicationsParser
 		apps                   models.Applications
 
-		command thingdoer.DiegoAppsCommand
+		command thingdoer.AppsGetter
 		err     error
 	)
 
 	BeforeEach(func() {
 		fakePaginatedRequester = new(fakes.FakePaginatedRequester)
 		fakeApplicationsParser = new(fakes.FakeApplicationsParser)
-		command = thingdoer.DiegoAppsCommand{}
+		command = thingdoer.AppsGetter{}
 	})
 
 	JustBeforeEach(func() {
