@@ -192,6 +192,9 @@ func newDiegoAppsCommand(cliConnection plugin.CliConnection, opts Opts) commands
 		if err != nil {
 			exitWithError(err, []string{})
 		}
+		if org.Guid == "" {
+			exitWithError(fmt.Errorf("Organization not found: %s", opts.Organization), []string{})
+		}
 		diegoAppsCommand.OrganizationGuid = org.Guid
 	}
 	return diegoAppsCommand
