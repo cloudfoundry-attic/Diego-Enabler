@@ -1,17 +1,31 @@
-package commands
+package thingdoer
 
 import (
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
-func (c DiegoAppsCommand) DeaApps(appsParser ApplicationsParser, paginatedRequester PaginatedRequester) (models.Applications, error) {
+type AppsGetterFunc func(ApplicationsParser, PaginatedRequester) (models.Applications, error)
+
+//go:generate counterfeiter . ApplicationsParser
+type ApplicationsParser interface {
+	Parse([]byte) (models.Applications, error)
+}
+
+type AppsGetter struct {
+	OrganizationGuid string
+}
+
+func (c AppsGetter) DiegoApps(
+	appsParser ApplicationsParser,
+	paginatedRequester PaginatedRequester,
+) (models.Applications, error) {
 	var noApps models.Applications
 
 	filter := api.Filters{
 		api.EqualFilter{
 			Name:  "diego",
-			Value: false,
+			Value: true,
 		},
 	}
 
@@ -24,7 +38,6 @@ func (c DiegoAppsCommand) DeaApps(appsParser ApplicationsParser, paginatedReques
 			},
 		)
 	}
-
 	params := map[string]interface{}{}
 
 	responseBodies, err := paginatedRequester.Do(filter, params)

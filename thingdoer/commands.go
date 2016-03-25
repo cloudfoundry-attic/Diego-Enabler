@@ -1,4 +1,4 @@
-package commands
+package thingdoer
 
 import "github.com/cloudfoundry-incubator/diego-enabler/api"
 

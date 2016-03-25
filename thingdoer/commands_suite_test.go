@@ -1,4 +1,4 @@
-package commands_test
+package thingdoer_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -9,5 +9,5 @@ import (
 
 func TestCommands(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Commands Suite")
+	RunSpecs(t, "Thingdoer Suite")
 }

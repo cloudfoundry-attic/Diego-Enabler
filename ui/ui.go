@@ -18,6 +18,24 @@ func (r Runtime) String() string {
 	}
 }
 
+func (r Runtime) Flip() Runtime {
+	if r == DEA {
+		return Diego
+	}
+	return DEA
+}
+
+func ParseRuntime(runtime string) (Runtime, error) {
+	switch strings.ToLower(runtime) {
+	case "dea":
+		return DEA, nil
+	case "diego":
+		return Diego, nil
+	default:
+		return "", fmt.Errorf("unkown runtime %s", runtime)
+	}
+}
+
 const (
 	DEA   = "DEA"
 	Diego = "Diego"

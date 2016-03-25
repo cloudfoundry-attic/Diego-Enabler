@@ -1,11 +1,11 @@
-package commands_test
+package thingdoer_test
 
 import (
 	"errors"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/fakes"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -24,7 +24,7 @@ var _ = Describe("Spaces", func() {
 	})
 
 	JustBeforeEach(func() {
-		spaces, err = commands.Spaces(fakeSpacesParser, fakePaginatedRequester)
+		spaces, err = thingdoer.Spaces(fakeSpacesParser, fakePaginatedRequester)
 	})
 
 	It("should create a request inline-relations-depth of 1", func() {

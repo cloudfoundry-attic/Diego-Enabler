@@ -1,41 +1,41 @@
-package commands_test
+package thingdoer_test
 
 import (
 	"errors"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/fakes"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("DiegoApps", func() {
+var _ = Describe("DeaApps", func() {
 	var (
 		fakePaginatedRequester *fakes.FakePaginatedRequester
 		fakeApplicationsParser *fakes.FakeApplicationsParser
 		apps                   models.Applications
 
-		command commands.DiegoAppsCommand
+		command thingdoer.AppsGetter
 		err     error
 	)
 
 	BeforeEach(func() {
 		fakePaginatedRequester = new(fakes.FakePaginatedRequester)
 		fakeApplicationsParser = new(fakes.FakeApplicationsParser)
-		command = commands.DiegoAppsCommand{}
+		command = thingdoer.AppsGetter{}
 	})
 
 	JustBeforeEach(func() {
-		apps, err = command.DiegoApps(fakeApplicationsParser, fakePaginatedRequester)
+		apps, err = command.DeaApps(fakeApplicationsParser, fakePaginatedRequester)
 	})
 
-	It("should create a request with diego filter set to true", func() {
+	It("should create a request with diego filter set to false", func() {
 		expectedFilters := api.Filters{
 			api.EqualFilter{
 				Name:  "diego",
-				Value: true,
+				Value: false,
 			},
 		}
 
@@ -53,7 +53,7 @@ var _ = Describe("DiegoApps", func() {
 			expectedFilters := api.Filters{
 				api.EqualFilter{
 					Name:  "diego",
-					Value: true,
+					Value: false,
 				},
 				api.EqualFilter{
 					Name:  "organization_guid",
@@ -109,7 +109,7 @@ var _ = Describe("DiegoApps", func() {
 			var parsedApps models.Applications = models.Applications{
 				models.Application{
 					models.ApplicationEntity{
-						Diego: true,
+						Diego: false,
 					},
 					models.ApplicationMetadata{
 						Guid: "some-guid",
@@ -126,7 +126,7 @@ var _ = Describe("DiegoApps", func() {
 				expectedApps := models.Applications{
 					models.Application{
 						models.ApplicationEntity{
-							Diego: true,
+							Diego: false,
 						},
 						models.ApplicationMetadata{
 							Guid: "some-guid",
@@ -134,7 +134,7 @@ var _ = Describe("DiegoApps", func() {
 					},
 					models.Application{
 						models.ApplicationEntity{
-							Diego: true,
+							Diego: false,
 						},
 						models.ApplicationMetadata{
 							Guid: "some-guid",
