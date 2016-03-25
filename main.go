@@ -71,7 +71,8 @@ WARNING:
    Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.
 
 OPTIONS:
-   -o      Organization to restrict the app migration to`,
+   -o      Organization to restrict the app migration to
+   -p      Maximum number of apps to migrate in parallel (Default: 1, maximum: 100)`,
 				},
 			},
 		},
