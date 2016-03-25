@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"crypto/tls"
@@ -21,13 +21,13 @@ func OrgNotFound(org string) error {
 }
 
 type ListApps struct {
-	opts            Opts
+	opts            ListAppOpts
 	Runtime         ui.Runtime
 	appsGetterFunc  thingdoer.AppsGetterFunc
 	listAppsCommand *ui.ListAppsCommand
 }
 
-type Opts struct {
+type ListAppOpts struct {
 	Organization string `short:"o"`
 }
 
@@ -39,10 +39,10 @@ func PrepareListApps(args []string, cliConnection plugin.CliConnection) (ListApp
 		return empty, err
 	}
 
-	var opts Opts
+	var opts ListAppOpts
 	_, err = flags.ParseArgs(&opts, args[1:])
 	if err != nil {
-		exitWithError(err, []string{})
+		return empty, err
 	}
 
 	appsGetter, err := NewAppsGetterFunc(cliConnection, opts.Organization, runtime)

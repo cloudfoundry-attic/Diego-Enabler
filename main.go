@@ -1,14 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
+	"github.com/cloudfoundry-incubator/diego-enabler/commands"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
-	"github.com/cloudfoundry-incubator/diego-enabler/models"
-	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
-	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/plugin"
 )
 
@@ -91,7 +88,7 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		c.isDiegoEnabled(cliConnection, args[1])
 	} else if args[0] == "diego-apps" {
 		opts := []string{"diego"}
-		cmd, err := PrepareListApps(append(opts, args[1:]...), cliConnection)
+		cmd, err := commands.PrepareListApps(append(opts, args[1:]...), cliConnection)
 		if err != nil {
 			exitWithError(err, []string{})
 		}
@@ -102,7 +99,7 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 		}
 	} else if args[0] == "dea-apps" {
 		opts := []string{"dea"}
-		cmd, err := PrepareListApps(append(opts, args[1:]...), cliConnection)
+		cmd, err := commands.PrepareListApps(append(opts, args[1:]...), cliConnection)
 		if err != nil {
 			exitWithError(err, []string{})
 		}
@@ -112,7 +109,7 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 			exitWithError(err, []string{})
 		}
 	} else if args[0] == "migrate-apps" {
-		cmd, err := PrepareMigrateApps(args[1:], cliConnection)
+		cmd, err := commands.PrepareMigrateApps(args[1:], cliConnection)
 		if err != nil {
 			exitWithError(err, []string{})
 		}
@@ -131,72 +128,6 @@ func (c *DiegoEnabler) showUsage(args []string) {
 			fmt.Println("Invalid Usage: \n", cmd.UsageDetails.Usage)
 		}
 	}
-}
-
-type appPrinter struct {
-	app    models.Application
-	spaces map[string]models.Space
-}
-
-func (a *appPrinter) Name() string {
-	return a.app.Name
-}
-
-func (a *appPrinter) Organization() string {
-	spaces := a.spaces
-	app := a.app
-
-	if len(spaces) == 0 {
-		return ""
-	}
-
-	space, ok := spaces[app.SpaceGuid]
-	if !ok {
-		return ""
-	}
-
-	if space.Organization.Name != "" {
-		return space.Organization.Name
-	}
-
-	return space.OrganizationGuid
-}
-
-func (a *appPrinter) Space() string {
-	var display string
-	spaces := a.spaces
-	app := a.app
-
-	if len(spaces) == 0 {
-		display = app.SpaceGuid
-	} else {
-		space, ok := spaces[app.SpaceGuid]
-		if ok {
-			display = space.Name
-		} else {
-			display = app.SpaceGuid
-		}
-	}
-
-	return display
-}
-
-func NewAppsGetterFunc(cliConnection plugin.CliConnection, orgName string, runtime ui.Runtime) (thingdoer.AppsGetterFunc, error) {
-	diegoAppsCommand := thingdoer.AppsGetter{}
-	if orgName != "" {
-		org, err := cliConnection.GetOrg(orgName)
-		if err != nil || org.Guid == "" {
-			return nil, OrgNotFound(orgName)
-		}
-		diegoAppsCommand.OrganizationGuid = org.Guid
-	}
-
-	var appsGetterFunc = diegoAppsCommand.DiegoApps
-	if runtime == ui.DEA {
-		appsGetterFunc = diegoAppsCommand.DeaApps
-	}
-
-	return appsGetterFunc, nil
 }
 
 func (c *DiegoEnabler) toggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName string) {
@@ -264,19 +195,3 @@ func sayOk() {
 func sayFailed() {
 	fmt.Println(say("FAILED", 31, 1))
 }
-
-func verifyLoggedIn(cliCon plugin.CliConnection) error {
-	var result error
-
-	if connected, err := cliCon.IsLoggedIn(); !connected {
-		result = NotLoggedInError
-
-		if err != nil {
-			result = err
-		}
-	}
-
-	return result
-}
-
-var NotLoggedInError = errors.New("You must be logged in")
