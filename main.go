@@ -65,7 +65,7 @@ OPTIONS:
 				Name:     "migrate-apps",
 				HelpText: "Migrate all apps to Diego/DEA",
 				UsageDetails: plugin.Usage{
-					Usage: `cf migrate-apps (diego | dea) [-o ORG]
+					Usage: `cf migrate-apps (diego | dea) [-o ORG] [-p MAX_IN_FLIGHT]
 
 WARNING:
    Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.
