@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
@@ -102,9 +103,9 @@ func (cmd *ListApps) Execute(cliConnection plugin.CliConnection) error {
 
 	var appPrinters []ui.ApplicationPrinter
 	for _, a := range apps {
-		appPrinters = append(appPrinters, &appPrinter{
-			app:    a,
-			spaces: spaceMap,
+		appPrinters = append(appPrinters, &displayhelpers.AppPrinter{
+			App:    a,
+			Spaces: spaceMap,
 		})
 	}
 

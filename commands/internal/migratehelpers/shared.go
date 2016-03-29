@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/plugin"
@@ -31,54 +30,6 @@ func NewAppsGetterFunc(cliConnection plugin.CliConnection, orgName string, runti
 	}
 
 	return appsGetterFunc, nil
-}
-
-type appPrinter struct {
-	app    models.Application
-	spaces map[string]models.Space
-}
-
-func (a *appPrinter) Name() string {
-	return a.app.Name
-}
-
-func (a *appPrinter) Organization() string {
-	spaces := a.spaces
-	app := a.app
-
-	if len(spaces) == 0 {
-		return ""
-	}
-
-	space, ok := spaces[app.SpaceGuid]
-	if !ok {
-		return ""
-	}
-
-	if space.Organization.Name != "" {
-		return space.Organization.Name
-	}
-
-	return space.Organization.Guid
-}
-
-func (a *appPrinter) Space() string {
-	var display string
-	spaces := a.spaces
-	app := a.app
-
-	if len(spaces) == 0 {
-		display = app.SpaceGuid
-	} else {
-		space, ok := spaces[app.SpaceGuid]
-		if ok {
-			display = space.Name
-		} else {
-			display = app.SpaceGuid
-		}
-	}
-
-	return display
 }
 
 func verifyLoggedIn(cliCon plugin.CliConnection) error {

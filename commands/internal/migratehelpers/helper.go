@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
@@ -133,13 +134,13 @@ func newAPIClient(cliConnection plugin.CliConnection) (*api.ApiClient, error) {
 	return apiClient, nil
 }
 
-type migrateAppFunc func(appPrinter *appPrinter, diegoSupport *diego_support.DiegoSupport) bool
+type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport *diego_support.DiegoSupport) bool
 
-func (cmd *MigrateApps) migrateApp(appPrinter *appPrinter, diegoSupport *diego_support.DiegoSupport) bool {
+func (cmd *MigrateApps) migrateApp(appPrinter *displayhelpers.AppPrinter, diegoSupport *diego_support.DiegoSupport) bool {
 	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
 
 	var waitTime time.Duration
-	if appPrinter.app.State == models.Started {
+	if appPrinter.App.State == models.Started {
 		waitTime = 1 * time.Minute
 		timeout := os.Getenv("CF_STARTUP_TIMEOUT")
 		if timeout != "" {
@@ -151,7 +152,7 @@ func (cmd *MigrateApps) migrateApp(appPrinter *appPrinter, diegoSupport *diego_s
 		}
 	}
 
-	_, err := diegoSupport.SetDiegoFlag(appPrinter.app.Guid, cmd.Runtime == ui.Diego)
+	_, err := diegoSupport.SetDiegoFlag(appPrinter.App.Guid, cmd.Runtime == ui.Diego)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		fmt.Println("Continuing...")
@@ -220,9 +221,9 @@ func processAppsChan(
 			defer waitDone.Done()
 
 			for app := range appsChan {
-				a := &appPrinter{
-					app:    app,
-					spaces: spaceMap,
+				a := &displayhelpers.AppPrinter{
+					App:    app,
+					Spaces: spaceMap,
 				}
 				output <- migrate(a, diegoSupport)
 			}
