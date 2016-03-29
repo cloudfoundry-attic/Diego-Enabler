@@ -24,6 +24,11 @@
 			"Rev": "a9f59445d6cbdc8f55676ccae2d9ef4a8305fd98"
 		},
 		{
+			"ImportPath": "github.com/cloudfoundry/cli/cf/formatters",
+			"Comment": "v6.16.1-206-ga9f5944",
+			"Rev": "a9f59445d6cbdc8f55676ccae2d9ef4a8305fd98"
+		},
+		{
 			"ImportPath": "github.com/cloudfoundry/cli/cf/i18n",
 			"Comment": "v6.16.1-206-ga9f5944",
 			"Rev": "a9f59445d6cbdc8f55676ccae2d9ef4a8305fd98"
