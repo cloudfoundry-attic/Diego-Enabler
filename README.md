@@ -9,7 +9,7 @@ This plugin enables Diego support for an app running on Cloud Foundry. For more
 information about running apps on Diego, see the [Migrating to Diego](https://github.com/cloudfoundry-incubator/diego-design-notes/blob/master/migrating-to-diego.md)
 guide.
 
-##Full Command List
+## Full Command List
 
 Command             |Usage                             |Description
 ---                 |---                               |---
@@ -17,7 +17,7 @@ Command             |Usage                             |Description
 `disable-diego`     | `cf disable-diego App_Name`      |disable Diego for an app
 `has-diego-enabled` | `cf has-diego-enabled App_Name`  |check if Diego is enabled for an app
 
-##Installation
+## Installation
 
 To install the plugin from the CF Community repository:
 
@@ -36,3 +36,13 @@ Then call `cf install-plugin` with either the URL you copied or the binary you d
   cf install-plugin [URL|binary]
 ```
 
+## Release
+
+To create release.
+
+1. [Gox](https://github.com/mitchellh/gox) must be installed
+1. [Github release](https://github.com/aktau/github-release) must be installed
+1. Run `bin/build`
+1. Export Github personal access token to `$GITHUB_TOKEN`
+1. Make sure the release version is updated in the file `VERSION`
+1. Run `bin/release`
