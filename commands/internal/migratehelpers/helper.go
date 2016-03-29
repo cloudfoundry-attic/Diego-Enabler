@@ -20,13 +20,8 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 )
 
-type MigrateAppsOpts struct {
-	Organization string `short:"o"`
-	MaxInFlight  string `short:"p"`
-}
-
 type MigrateApps struct {
-	Opts               MigrateAppsOpts
+	MaxInFlight        int
 	Runtime            ui.Runtime
 	AppsGetterFunc     thingdoer.AppsGetterFunc
 	MigrateAppsCommand *ui.MigrateAppsCommand
@@ -84,21 +79,13 @@ func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 		spaceMap[space.Guid] = space
 	}
 
-	maxInFlight := 1
-	if cmd.Opts.MaxInFlight != "" {
-		maxInFlight, err = strconv.Atoi(cmd.Opts.MaxInFlight)
-		if err != nil || maxInFlight <= 0 || maxInFlight > 100 {
-			return fmt.Errorf("Invalid maximum apps in flight: %s\nValue for MAX_IN_FLIGHT must be an integer between 1 and 100", cmd.Opts.MaxInFlight)
-		}
-	}
-
-	warnings := cmd.migrateApps(cliConnection, apps, spaceMap, maxInFlight)
+	warnings := cmd.migrateApps(cliConnection, apps, spaceMap, cmd.MaxInFlight)
 	cmd.MigrateAppsCommand.AfterAll(len(apps), warnings)
 
 	return nil
 }
 
-func NewMigrateAppsCommand(cliConnection plugin.CliConnection, opts MigrateAppsOpts, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
+func NewMigrateAppsCommand(cliConnection plugin.CliConnection, organization string, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
 	username, err := cliConnection.Username()
 	if err != nil {
 		return ui.MigrateAppsCommand{}, err
@@ -106,7 +93,7 @@ func NewMigrateAppsCommand(cliConnection plugin.CliConnection, opts MigrateAppsO
 
 	return ui.MigrateAppsCommand{
 		Username:     username,
-		Organization: opts.Organization,
+		Organization: organization,
 		Runtime:      runtime,
 	}, nil
 }

@@ -23,30 +23,28 @@ type MigrateAppsCommand struct {
 //   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.
 
 func (command MigrateAppsCommand) Execute([]string) error {
+	if command.MaxInFlight <= 0 || command.MaxInFlight > 100 { //TODO: Flag helper this
+		return fmt.Errorf("Invalid maximum apps in flight: %s\nValue for MAX_IN_FLIGHT must be an integer between 1 and 100", command.MaxInFlight)
+	}
+
 	cliConnection := DiegoEnabler.CLIConnection
 	runtime, err := ui.ParseRuntime(command.RequiredOptions.Runtime)
 	if err != nil {
 		return err
 	}
 
-	opts := migratehelpers.MigrateAppsOpts{
-		Organization: command.Organization,
-		//TODO: do not pass in a string, pass in an int
-		MaxInFlight: fmt.Sprintf("%d", command.MaxInFlight),
-	}
-
-	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, opts.Organization, runtime.Flip())
+	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, runtime.Flip())
 	if err != nil {
 		return err
 	}
 
-	migrateAppsCommand, err := migratehelpers.NewMigrateAppsCommand(cliConnection, opts, runtime)
+	migrateAppsCommand, err := migratehelpers.NewMigrateAppsCommand(cliConnection, command.Organization, runtime)
 	if err != nil {
 		return err
 	}
 
 	cmd := migratehelpers.MigrateApps{
-		Opts:               opts,
+		MaxInFlight:        command.MaxInFlight,
 		Runtime:            runtime,
 		AppsGetterFunc:     appsGetter,
 		MigrateAppsCommand: &migrateAppsCommand,
