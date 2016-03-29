@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/diegohelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/migratehelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
@@ -34,7 +35,7 @@ func (command MigrateAppsCommand) Execute([]string) error {
 		MaxInFlight: fmt.Sprintf("%d", command.MaxInFlight),
 	}
 
-	appsGetter, err := migratehelpers.NewAppsGetterFunc(cliConnection, opts.Organization, runtime.Flip())
+	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, opts.Organization, runtime.Flip())
 	if err != nil {
 		return err
 	}

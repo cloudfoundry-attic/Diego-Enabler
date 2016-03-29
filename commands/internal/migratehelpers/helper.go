@@ -12,6 +12,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/verificationhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
@@ -111,8 +112,7 @@ func NewMigrateAppsCommand(cliConnection plugin.CliConnection, opts MigrateAppsO
 }
 
 func newAPIClient(cliConnection plugin.CliConnection) (*api.ApiClient, error) {
-
-	if err := verifyLoggedIn(cliConnection); err != nil {
+	if err := verificationhelpers.VerifyLoggedIn(cliConnection); err != nil {
 		return nil, err
 	}
 

@@ -2,12 +2,12 @@ package listhelpers
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/verificationhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
@@ -15,10 +15,6 @@ import (
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
 )
-
-func OrgNotFound(org string) error {
-	return fmt.Errorf("Organization not found: %s", org)
-}
 
 type ListApps struct {
 	Opts            ListAppOpts
@@ -32,8 +28,7 @@ type ListAppOpts struct {
 }
 
 func (cmd *ListApps) Execute(cliConnection plugin.CliConnection) error {
-
-	if err := verifyLoggedIn(cliConnection); err != nil {
+	if err := verificationhelpers.VerifyLoggedIn(cliConnection); err != nil {
 		return err
 	}
 

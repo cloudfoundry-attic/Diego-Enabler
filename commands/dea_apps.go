@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/diegohelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/listhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
@@ -17,7 +18,7 @@ func (command DeaAppsCommand) Execute([]string) error {
 		Organization: command.Organization,
 	}
 
-	appsGetter, err := listhelpers.NewAppsGetterFunc(cliConnection, opts.Organization, runtime)
+	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, opts.Organization, runtime)
 	if err != nil {
 		return err
 	}

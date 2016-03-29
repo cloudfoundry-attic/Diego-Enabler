@@ -6,6 +6,8 @@ import (
 
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
+	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/plugin"
 )
 
@@ -53,4 +55,30 @@ func IsDiegoEnabled(cliConnection plugin.CliConnection, appName string) error {
 	fmt.Println(app.Diego)
 
 	return nil
+}
+
+type OrgNotFoundErr struct {
+	OrganizationName string
+}
+
+func (e OrgNotFoundErr) Error() string {
+	return fmt.Sprintf("Organization not found: %s", e.OrganizationName)
+}
+
+func NewAppsGetterFunc(cliConnection plugin.CliConnection, orgName string, runtime ui.Runtime) (thingdoer.AppsGetterFunc, error) {
+	diegoAppsCommand := thingdoer.AppsGetter{}
+	if orgName != "" {
+		org, err := cliConnection.GetOrg(orgName)
+		if err != nil || org.Guid == "" {
+			return nil, OrgNotFoundErr{OrganizationName: orgName}
+		}
+		diegoAppsCommand.OrganizationGuid = org.Guid
+	}
+
+	var appsGetterFunc = diegoAppsCommand.DiegoApps
+	if runtime == ui.DEA {
+		appsGetterFunc = diegoAppsCommand.DeaApps
+	}
+
+	return appsGetterFunc, nil
 }
