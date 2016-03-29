@@ -16,18 +16,7 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 )
 
-type ListApps struct {
-	Opts            ListAppOpts
-	Runtime         ui.Runtime
-	AppsGetterFunc  thingdoer.AppsGetterFunc
-	ListAppsCommand *ui.ListAppsCommand
-}
-
-type ListAppOpts struct {
-	Organization string
-}
-
-func (cmd *ListApps) Execute(cliConnection plugin.CliConnection) error {
+func ListApps(cliConnection plugin.CliConnection, appsGetterFunc thingdoer.AppsGetterFunc, listAppsCommand *ui.ListAppsCommand) error {
 	if err := verificationhelpers.VerifyLoggedIn(cliConnection); err != nil {
 		return err
 	}
@@ -37,7 +26,7 @@ func (cmd *ListApps) Execute(cliConnection plugin.CliConnection) error {
 		return err
 	}
 
-	cmd.ListAppsCommand.BeforeAll()
+	listAppsCommand.BeforeAll()
 
 	pageParser := api.PageParser{}
 	appsParser := models.ApplicationsParser{}
@@ -63,7 +52,7 @@ func (cmd *ListApps) Execute(cliConnection plugin.CliConnection) error {
 		apiClient.Authorize(apiClient.NewGetAppsRequest),
 	)
 
-	apps, err := cmd.AppsGetterFunc(
+	apps, err := appsGetterFunc(
 		appsParser,
 		&api.PaginatedRequester{
 			RequestFactory: appRequestFactory,
@@ -104,7 +93,7 @@ func (cmd *ListApps) Execute(cliConnection plugin.CliConnection) error {
 		})
 	}
 
-	cmd.ListAppsCommand.AfterAll(appPrinters)
+	listAppsCommand.AfterAll(appPrinters)
 
 	return nil
 }

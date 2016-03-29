@@ -14,28 +14,17 @@ func (command DeaAppsCommand) Execute([]string) error {
 	cliConnection := DiegoEnabler.CLIConnection
 	runtime := ui.Runtime(ui.DEA)
 
-	opts := listhelpers.ListAppOpts{
-		Organization: command.Organization,
-	}
-
-	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, opts.Organization, runtime)
+	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, runtime)
 	if err != nil {
 		return err
 	}
 
-	listAppsCommand, err := listhelpers.NewListAppsCommand(cliConnection, opts.Organization, runtime)
+	listAppsCommand, err := listhelpers.NewListAppsCommand(cliConnection, command.Organization, runtime)
 	if err != nil {
 		return err
 	}
 
-	cmd := listhelpers.ListApps{
-		Opts:            opts,
-		Runtime:         runtime,
-		AppsGetterFunc:  appsGetter,
-		ListAppsCommand: &listAppsCommand,
-	}
-
-	err = cmd.Execute(cliConnection)
+	err = listhelpers.ListApps(cliConnection, appsGetter, &listAppsCommand)
 	if err != nil {
 		return err
 	}
