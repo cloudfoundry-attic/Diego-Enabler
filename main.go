@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
-	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/jessevdk/go-flags"
 )
 
 type DiegoEnabler struct{}
@@ -84,118 +84,13 @@ func main() {
 }
 
 func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
-	if args[0] == "enable-diego" && len(args) == 2 {
-		c.toggleDiegoSupport(true, cliConnection, args[1])
-	} else if args[0] == "disable-diego" && len(args) == 2 {
-		c.toggleDiegoSupport(false, cliConnection, args[1])
-	} else if args[0] == "has-diego-enabled" && len(args) == 2 {
-		c.isDiegoEnabled(cliConnection, args[1])
-	} else if args[0] == "diego-apps" {
-		opts := []string{"diego"}
-		cmd, err := commands.PrepareListApps(append(opts, args[1:]...), cliConnection)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
+	commands.DiegoEnabler.CLIConnection = cliConnection
+	parser := flags.NewParser(&commands.DiegoEnabler, flags.HelpFlag|flags.PassDoubleDash)
+	parser.NamespaceDelimiter = "-"
 
-		err = cmd.Execute(cliConnection)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-	} else if args[0] == "dea-apps" {
-		opts := []string{"dea"}
-		cmd, err := commands.PrepareListApps(append(opts, args[1:]...), cliConnection)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-
-		err = cmd.Execute(cliConnection)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-	} else if args[0] == "migrate-apps" {
-		cmd, err := commands.PrepareMigrateApps(args[1:], cliConnection)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-		err = cmd.Execute(cliConnection)
-		if err != nil {
-			exitWithError(err, []string{})
-		}
-	} else {
-		c.showUsage(args)
-	}
-}
-
-func (c *DiegoEnabler) showUsage(args []string) {
-	for _, cmd := range c.GetMetadata().Commands {
-		if cmd.Name == args[0] {
-			fmt.Println("Invalid Usage: \n", cmd.UsageDetails.Usage)
-		}
-	}
-}
-
-func (c *DiegoEnabler) toggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName string) {
-	d := diego_support.NewDiegoSupport(cliConnection)
-
-	fmt.Printf("Setting %s Diego support to %t\n", appName, on)
-	app, err := cliConnection.GetApp(appName)
+	_, err := parser.ParseArgs(args)
 	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	if output, err := d.SetDiegoFlag(app.Guid, on); err != nil {
-		fmt.Println("err 1", err, output)
-		exitWithError(err, output)
-	}
-	sayOk()
-
-	fmt.Printf("Verifying %s Diego support is set to %t\n", appName, on)
-	app, err = cliConnection.GetApp(appName)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	if app.Diego == on {
-		sayOk()
-	} else {
-		sayFailed()
-		fmt.Printf("Diego support for %s is NOT set to %t\n\n", appName, on)
+		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
 	}
-}
-
-func (c *DiegoEnabler) isDiegoEnabled(cliConnection plugin.CliConnection, appName string) {
-	app, err := cliConnection.GetApp(appName)
-	if err != nil {
-		exitWithError(err, []string{})
-	}
-
-	if app.Guid == "" {
-		sayFailed()
-		fmt.Printf("App %s not found\n\n", appName)
-		os.Exit(1)
-	}
-
-	fmt.Println(app.Diego)
-}
-
-func exitWithError(err error, output []string) {
-	sayFailed()
-	fmt.Println("Error: ", err)
-	for _, str := range output {
-		fmt.Println(str)
-	}
-	os.Exit(1)
-}
-
-func say(message string, color uint, bold int) string {
-	return fmt.Sprintf("\033[%d;%dm%s\033[0m", bold, color, message)
-}
-
-func sayOk() {
-	fmt.Println(say("Ok\n", 32, 1))
-}
-
-func sayFailed() {
-	fmt.Println(say("FAILED", 31, 1))
 }

@@ -82,7 +82,7 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				session.Wait()
-				Expect(session).To(gbytes.Say("Invalid Usage"))
+				Expect(session).To(gbytes.Say("required argument `APP_NAME` was not provided"))
 			})
 
 			Context("when the args are properly provided", func() {
@@ -196,7 +196,7 @@ var _ = Describe("DiegoEnabler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				session.Wait()
-				Expect(session).To(gbytes.Say("Invalid Usage"))
+				Expect(session).To(gbytes.Say("required argument `APP_NAME` was not provided"))
 			})
 
 			Context("when the app is found", func() {
@@ -233,7 +233,7 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					session.Wait()
-					Expect(session).To(gbytes.Say("Invalid Usage"))
+					Expect(session).To(gbytes.Say("required argument `APP_NAME` was not provided"))
 				})
 
 				Context("when the params are properly provided", func() {
