@@ -1,0 +1,68 @@
+resources:
+- name: diego-enabler
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry-incubator/diego-enabler
+    private_key: {{cf-cli-eng-github-private-key}}
+    branch: master
+
+jobs:
+- name: units
+  serial: true
+  plan:
+  - aggregate:
+    - get: diego-enabler
+      trigger: true
+  - aggregate:
+    - task: build
+      config:
+        platform: linux
+        image: docker:///cloudfoundry/cli-ci
+        inputs:
+        - name: diego-enabler
+          path: gopath/src/github.com/cloudfoundry-incubator/diego-enabler
+
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            set -ex
+
+            cwd=$PWD
+
+            export GOPATH=$PWD/gopath
+            export PATH=$GOPATH/bin:$PATH
+
+            go get github.com/mitchellh/gox
+
+            pushd $GOPATH/src/github.com/cloudfoundry-incubator/diego-enabler
+              ./bin/build
+            popd
+
+    - task: units
+      config:
+        platform: linux
+        image: docker:///cloudfoundry/cli-ci
+        inputs:
+        - name: diego-enabler
+          path: gopath/src/github.com/cloudfoundry-incubator/diego-enabler
+
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            set -ex
+
+            cwd=$PWD
+
+            export GOPATH=$PWD/gopath
+            export PATH=$GOPATH/bin:$PATH
+
+            go get github.com/onsi/ginkgo/ginkgo
+            go get github.com/mitchellh/gox
+
+            pushd $GOPATH/src/github.com/cloudfoundry-incubator/diego-enabler
+              ./bin/test
+            popd
