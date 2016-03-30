@@ -14,7 +14,7 @@ func (command DeaAppsCommand) Execute([]string) error {
 	cliConnection := DiegoEnabler.CLIConnection
 	runtime := ui.DEA
 
-	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, runtime)
+	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, "", runtime)
 	if err != nil {
 		return err
 	}

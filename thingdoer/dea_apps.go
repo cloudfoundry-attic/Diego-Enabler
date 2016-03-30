@@ -23,6 +23,14 @@ func (c AppsGetter) DeaApps(appsParser ApplicationsParser, paginatedRequester Pa
 				Value: c.OrganizationGuid,
 			},
 		)
+	} else if c.SpaceGuid != "" {
+		filter = append(
+			filter,
+			api.EqualFilter{
+				Name:  "space_guid",
+				Value: c.SpaceGuid,
+			},
+		)
 	}
 
 	params := map[string]interface{}{}

@@ -10,20 +10,30 @@ type MigrateAppsCommand struct {
 	Username     string
 	Runtime      Runtime
 	Organization string
+	Space        string
 }
 
 func (c *MigrateAppsCommand) BeforeAll() {
-	if c.Organization == "" {
+	switch {
+	case c.Organization != "" && c.Space != "":
 		fmt.Printf(
-			"Migrating apps to %s as %s...\n",
+			"Migrating apps to %s in org %s / %s as %s...\n",
 			terminal.EntityNameColor(c.Runtime.String()),
+			terminal.EntityNameColor(c.Organization),
+			terminal.EntityNameColor(c.Space),
 			terminal.EntityNameColor(c.Username),
 		)
-	} else {
+	case c.Organization != "":
 		fmt.Printf(
 			"Migrating apps to %s in org %s as %s...\n",
 			terminal.EntityNameColor(c.Runtime.String()),
 			terminal.EntityNameColor(c.Organization),
+			terminal.EntityNameColor(c.Username),
+		)
+	default:
+		fmt.Printf(
+			"Migrating apps to %s as %s...\n",
+			terminal.EntityNameColor(c.Runtime.String()),
 			terminal.EntityNameColor(c.Username),
 		)
 	}

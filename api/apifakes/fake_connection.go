@@ -36,6 +36,13 @@ type FakeConnection struct {
 		result1 string
 		result2 error
 	}
+	UsernameStub        func() (string, error)
+	usernameMutex       sync.RWMutex
+	usernameArgsForCall []struct{}
+	usernameReturns     struct {
+		result1 string
+		result2 error
+	}
 }
 
 func (fake *FakeConnection) IsLoggedIn() (bool, error) {
@@ -133,6 +140,31 @@ func (fake *FakeConnection) AccessTokenCallCount() int {
 func (fake *FakeConnection) AccessTokenReturns(result1 string, result2 error) {
 	fake.AccessTokenStub = nil
 	fake.accessTokenReturns = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeConnection) Username() (string, error) {
+	fake.usernameMutex.Lock()
+	fake.usernameArgsForCall = append(fake.usernameArgsForCall, struct{}{})
+	fake.usernameMutex.Unlock()
+	if fake.UsernameStub != nil {
+		return fake.UsernameStub()
+	} else {
+		return fake.usernameReturns.result1, fake.usernameReturns.result2
+	}
+}
+
+func (fake *FakeConnection) UsernameCallCount() int {
+	fake.usernameMutex.RLock()
+	defer fake.usernameMutex.RUnlock()
+	return len(fake.usernameArgsForCall)
+}
+
+func (fake *FakeConnection) UsernameReturns(result1 string, result2 error) {
+	fake.UsernameStub = nil
+	fake.usernameReturns = struct {
 		result1 string
 		result2 error
 	}{result1, result2}

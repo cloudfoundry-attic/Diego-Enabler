@@ -14,6 +14,7 @@ type ApplicationsParser interface {
 
 type AppsGetter struct {
 	OrganizationGuid string
+	SpaceGuid        string
 }
 
 func (c AppsGetter) DiegoApps(
@@ -37,7 +38,16 @@ func (c AppsGetter) DiegoApps(
 				Value: c.OrganizationGuid,
 			},
 		)
+	} else if c.SpaceGuid != "" {
+		filter = append(
+			filter,
+			api.EqualFilter{
+				Name:  "space_guid",
+				Value: c.SpaceGuid,
+			},
+		)
 	}
+
 	params := map[string]interface{}{}
 
 	responseBodies, err := paginatedRequester.Do(filter, params)

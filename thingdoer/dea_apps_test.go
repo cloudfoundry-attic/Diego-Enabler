@@ -67,6 +67,29 @@ var _ = Describe("DeaApps", func() {
 		})
 	})
 
+	Context("when an space name is specified", func() {
+		BeforeEach(func() {
+			command.SpaceGuid = "some-space-guid"
+		})
+
+		It("should create a request with space guid set", func() {
+			expectedFilters := api.Filters{
+				api.EqualFilter{
+					Name:  "diego",
+					Value: false,
+				},
+				api.EqualFilter{
+					Name:  "space_guid",
+					Value: "some-space-guid",
+				},
+			}
+
+			Expect(fakePaginatedRequester.DoCallCount()).To(Equal(1))
+			filters, _ := fakePaginatedRequester.DoArgsForCall(0)
+			Expect(filters).To(Equal(expectedFilters))
+		})
+	})
+
 	Context("when the paginated requester fails", func() {
 		var requestError error
 

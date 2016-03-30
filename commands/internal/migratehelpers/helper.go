@@ -84,16 +84,25 @@ func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 	return nil
 }
 
-func NewMigrateAppsCommand(cliConnection plugin.CliConnection, organization string, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
+func NewMigrateAppsCommand(cliConnection plugin.CliConnection, organizationName string, spaceName string, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
 	username, err := cliConnection.Username()
 	if err != nil {
 		return ui.MigrateAppsCommand{}, err
 	}
 
+	if spaceName != "" {
+		space, err := cliConnection.GetSpace(spaceName)
+		if err != nil || space.Guid == "" {
+			return ui.MigrateAppsCommand{}, err
+		}
+		organizationName = space.Organization.Name
+	}
+
 	return ui.MigrateAppsCommand{
 		Username:     username,
-		Organization: organization,
 		Runtime:      runtime,
+		Organization: organizationName,
+		Space:        spaceName,
 	}, nil
 }
 

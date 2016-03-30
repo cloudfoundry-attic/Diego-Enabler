@@ -71,13 +71,14 @@ OPTIONS:
 				Name:     "migrate-apps",
 				HelpText: "Migrate all apps to Diego/DEA",
 				UsageDetails: plugin.Usage{
-					Usage: `cf migrate-apps (diego | dea) [-o ORG] [-p MAX_IN_FLIGHT]
+					Usage: `cf migrate-apps (diego | dea) [-o ORG | -s SPACE] [-p MAX_IN_FLIGHT]
 
 WARNING:
    Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.
 
 OPTIONS:
    -o      Organization to restrict the app migration to
+   -s      Space in the targeted organization to restrict the app migration to
    -p      Maximum number of apps to migrate in parallel (Default: 1, maximum: 100)`,
 				},
 			},

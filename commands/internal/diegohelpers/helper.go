@@ -65,14 +65,34 @@ func (e OrgNotFoundErr) Error() string {
 	return fmt.Sprintf("Organization not found: %s", e.OrganizationName)
 }
 
-func NewAppsGetterFunc(cliConnection plugin.CliConnection, orgName string, runtime ui.Runtime) (thingdoer.AppsGetterFunc, error) {
+type SpaceNotFoundErr struct {
+	SpaceName string
+}
+
+func (e SpaceNotFoundErr) Error() string {
+	return fmt.Sprintf("Space not found: %s", e.SpaceName)
+}
+
+func NewAppsGetterFunc(
+	cliConnection plugin.CliConnection,
+	orgName string,
+	spaceName string,
+	runtime ui.Runtime,
+) (thingdoer.AppsGetterFunc, error) {
 	diegoAppsCommand := thingdoer.AppsGetter{}
+
 	if orgName != "" {
 		org, err := cliConnection.GetOrg(orgName)
 		if err != nil || org.Guid == "" {
 			return nil, OrgNotFoundErr{OrganizationName: orgName}
 		}
 		diegoAppsCommand.OrganizationGuid = org.Guid
+	} else if spaceName != "" {
+		space, err := cliConnection.GetSpace(spaceName)
+		if err != nil || space.Guid == "" {
+			return nil, SpaceNotFoundErr{SpaceName: spaceName}
+		}
+		diegoAppsCommand.SpaceGuid = space.Guid
 	}
 
 	var appsGetterFunc = diegoAppsCommand.DiegoApps

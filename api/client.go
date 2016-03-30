@@ -20,6 +20,8 @@ type Connection interface {
 
 	ApiEndpoint() (string, error)
 	AccessToken() (string, error)
+
+	Username() (string, error)
 }
 
 var NotLoggedInError = errors.New("You must be logged in")
