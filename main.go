@@ -51,20 +51,22 @@ WARNING:
 				Name:     "diego-apps",
 				HelpText: "Lists all apps running on the Diego runtime that are visible to the user",
 				UsageDetails: plugin.Usage{
-					Usage: `cf diego-apps [-o ORG]
+					Usage: `cf diego-apps [-o ORG | -s SPACE]
 
 OPTIONS:
-   -o      Organization to restrict the app migration to`,
+   -o      Organization to restrict the app migration to,
+   -s      Space in the targeted organization to limit results to`,
 				},
 			},
 			{
 				Name:     "dea-apps",
 				HelpText: "Lists all apps running on the DEA runtime that are visible to the user",
 				UsageDetails: plugin.Usage{
-					Usage: `cf dea-apps [-o ORG]
+					Usage: `cf dea-apps [-o ORG | -s SPACE]
 
 OPTIONS:
-   -o      Organization to restrict the app migration to`,
+   -o      Organization to restrict the app migration to,
+   -s      Space in the targeted organization to limit results to`,
 				},
 			},
 			{

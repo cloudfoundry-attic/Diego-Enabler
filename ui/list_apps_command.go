@@ -10,21 +10,31 @@ type ListAppsCommand struct {
 	Username     string
 	Runtime      Runtime
 	Organization string
+	Space        string
 	UI           terminal.UI
 }
 
 func (c *ListAppsCommand) BeforeAll() {
-	if c.Organization == "" {
+	switch {
+	case c.Space != "" && c.Organization != "":
 		fmt.Printf(
-			"Getting apps on the %s runtime as %s...\n",
+			"Getting apps on the %s runtime in org %s / %s as %s...\n",
 			terminal.EntityNameColor(c.Runtime.String()),
+			terminal.EntityNameColor(c.Organization),
+			terminal.EntityNameColor(c.Space),
 			terminal.EntityNameColor(c.Username),
 		)
-	} else {
+	case c.Organization != "":
 		fmt.Printf(
 			"Getting apps on the %s runtime in org %s as %s...\n",
 			terminal.EntityNameColor(c.Runtime.String()),
 			terminal.EntityNameColor(c.Organization),
+			terminal.EntityNameColor(c.Username),
+		)
+	default:
+		fmt.Printf(
+			"Getting apps on the %s runtime as %s...\n",
+			terminal.EntityNameColor(c.Runtime.String()),
 			terminal.EntityNameColor(c.Username),
 		)
 	}

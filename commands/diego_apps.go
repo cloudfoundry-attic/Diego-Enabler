@@ -8,18 +8,19 @@ import (
 
 type DiegoAppsCommand struct {
 	Organization string `short:"o" long:"organization" value-name:"ORG" description:"Organization to restrict the app migration to"`
+	Space        string `short:"s" long:"space" value-name:"SPACE" description:"Space in the targeted organization to limit results to"`
 }
 
 func (command DiegoAppsCommand) Execute([]string) error {
 	cliConnection := DiegoEnabler.CLIConnection
 	runtime := ui.Diego
 
-	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, "", runtime)
+	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, command.Space, runtime)
 	if err != nil {
 		return err
 	}
 
-	listAppsCommand, err := listhelpers.NewListAppsCommand(cliConnection, command.Organization, runtime)
+	listAppsCommand, err := listhelpers.NewListAppsCommand(cliConnection, command.Organization, command.Space, runtime)
 	if err != nil {
 		return err
 	}

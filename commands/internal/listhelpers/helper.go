@@ -83,10 +83,18 @@ func ListApps(cliConnection plugin.CliConnection, appsGetterFunc thingdoer.AppsG
 	return nil
 }
 
-func NewListAppsCommand(cliConnection plugin.CliConnection, orgName string, runtime ui.Runtime) (ui.ListAppsCommand, error) {
+func NewListAppsCommand(cliConnection plugin.CliConnection, orgName string, spaceName string, runtime ui.Runtime) (ui.ListAppsCommand, error) {
 	username, err := cliConnection.Username()
 	if err != nil {
 		return ui.ListAppsCommand{}, err
+	}
+
+	if spaceName != "" {
+		space, err := cliConnection.GetSpace(spaceName)
+		if err != nil || space.Guid == "" {
+			return ui.ListAppsCommand{}, err
+		}
+		orgName = space.Organization.Name
 	}
 
 	traceEnv := os.Getenv("CF_TRACE")
@@ -96,6 +104,7 @@ func NewListAppsCommand(cliConnection plugin.CliConnection, orgName string, runt
 	cmd := ui.ListAppsCommand{
 		Username:     username,
 		Organization: orgName,
+		Space:        spaceName,
 		UI:           tUI,
 		Runtime:      runtime,
 	}
