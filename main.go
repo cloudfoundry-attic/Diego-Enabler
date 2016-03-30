@@ -22,21 +22,27 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 		Commands: []plugin.Command{
 			{
 				Name:     "enable-diego",
-				HelpText: "enable Diego support for an app",
+				HelpText: "Migrate app to the Diego runtime",
 				UsageDetails: plugin.Usage{
-					Usage: "cf enable-diego APP_NAME",
+					Usage: `cf enable-diego APP_NAME
+
+WARNING:
+   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
 				},
 			},
 			{
 				Name:     "disable-diego",
-				HelpText: "disable Diego support for an app",
+				HelpText: "Migrate app to the DEA runtime",
 				UsageDetails: plugin.Usage{
-					Usage: "cf disable-diego APP_NAME",
+					Usage: `cf disable-diego APP_NAME
+
+WARNING:
+   Migration of a running app causes a restart. Stopped apps will be configured to run on the target runtime but are not started.`,
 				},
 			},
 			{
 				Name:     "has-diego-enabled",
-				HelpText: "Check if Diego support is enabled for an app",
+				HelpText: "Report whether an app is configured to run on the Diego runtime",
 				UsageDetails: plugin.Usage{
 					Usage: "cf has-diego-enabled APP_NAME",
 				},

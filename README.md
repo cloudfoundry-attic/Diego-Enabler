@@ -13,9 +13,9 @@ guide.
 
 Command             |Usage                             |Description
 ---                 |---                               |---
-`enable-diego`      | `cf enable-diego App_Name`       |enable Diego for an app
-`disable-diego`     | `cf disable-diego App_Name`      |disable Diego for an app
-`has-diego-enabled` | `cf has-diego-enabled App_Name`  |check if Diego is enabled for an app
+`enable-diego`      | `cf enable-diego App_Name`       |Migrate app to the Diego runtime
+`disable-diego`     | `cf disable-diego App_Name`      |Migrate app to the DEA runtime
+`has-diego-enabled` | `cf has-diego-enabled App_Name`  |Report whether an app is configured to run on the Diego runtime
 
 ## Installation
 
