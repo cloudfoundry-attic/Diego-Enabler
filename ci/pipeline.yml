@@ -6,6 +6,14 @@ resources:
     private_key: {{cf-cli-eng-github-private-key}}
     branch: master
 
+- name: diego-enabler-draft-release
+  type: github-release
+  source:
+    user: cloudfoundry-incubator
+    repository: Diego-Enabler
+    access_token: {{cli-github-diego-enabler-release-token}}
+    drafts: true
+
 jobs:
 - name: units
   serial: true
@@ -21,6 +29,8 @@ jobs:
         inputs:
         - name: diego-enabler
           path: gopath/src/github.com/cloudfoundry-incubator/diego-enabler
+        outputs:
+        - name: diego-enabler-releases
 
         run:
           path: bash
@@ -39,6 +49,8 @@ jobs:
             pushd $GOPATH/src/github.com/cloudfoundry-incubator/diego-enabler
               ./bin/build
             popd
+
+            cp $GOPATH/src/github.com/cloudfoundry-incubator/diego-enabler/out/* diego-enabler-releases
 
     - task: units
       config:
@@ -66,3 +78,14 @@ jobs:
             pushd $GOPATH/src/github.com/cloudfoundry-incubator/diego-enabler
               ./bin/test
             popd
+  - aggregate:
+    - put: diego-enabler-draft-release
+      params:
+          name: diego-enabler/ci/draft-release-name
+          tag: diego-enabler/ci/draft-release-tag
+          globs:
+          - diego-enabler-releases/diego-enabler_darwin_amd64
+          - diego-enabler-releases/diego-enabler_linux_386
+          - diego-enabler-releases/diego-enabler_linux_amd64
+          - diego-enabler-releases/diego-enabler_windows_386.exe
+          - diego-enabler-releases/diego-enabler_windows_amd64.exe
