@@ -8,7 +8,6 @@ import (
 
 	. "github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/api/apifakes"
-	pluginfakes "github.com/cloudfoundry/cli/plugin/fakes"
 )
 
 var _ = Describe("Api", func() {
@@ -20,14 +19,14 @@ var _ = Describe("Api", func() {
 		request *http.Request
 		err     error
 
-		cliConnection *pluginfakes.FakeCliConnection
+		cliConnection *apifakes.FakeConnection
 	)
 
 	BeforeEach(func() {
 		baseUrl = "https://api.my-crazy-domain.com"
 		authToken = "some-auth-token"
 
-		cliConnection = new(pluginfakes.FakeCliConnection)
+		cliConnection = new(apifakes.FakeConnection)
 		cliConnection.AccessTokenReturns(authToken, nil)
 		cliConnection.ApiEndpointReturns(baseUrl, nil)
 		cliConnection.IsLoggedInReturns(true, nil)
