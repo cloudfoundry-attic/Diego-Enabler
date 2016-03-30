@@ -11,11 +11,14 @@ guide.
 
 ## Full Command List
 
-Command             |Usage                             |Description
----                 |---                               |---
-`enable-diego`      | `cf enable-diego App_Name`       |Migrate app to the Diego runtime
-`disable-diego`     | `cf disable-diego App_Name`      |Migrate app to the DEA runtime
-`has-diego-enabled` | `cf has-diego-enabled App_Name`  |Report whether an app is configured to run on the Diego runtime
+Command             |Usage                                                                        |Description
+---                 |---                                                                          |---
+`enable-diego`      | `cf enable-diego App_Name`                                                  |Migrate app to the Diego runtime
+`disable-diego`     | `cf disable-diego App_Name`                                                 |Migrate app to the DEA runtime
+`has-diego-enabled` | `cf has-diego-enabled App_Name`                                             |Report whether an app is configured to run on the Diego runtime
+`diego-apps`        | `cf diego-apps [-o ORG]`                                                    |Lists all apps running on the Diego runtime that are visible to the user
+`dea-apps`          | `cf dea-apps [-o ORG]`                                                      |Lists all apps running on the DEA runtime that are visible to the user
+`migrate-apps`      | <code>cf migrate-apps (diego &#124; dea) [-o ORG] [-p MAX_IN_FLIGHT]</code> |Migrate all apps to Diego/DEA
 
 ## Installation
 
