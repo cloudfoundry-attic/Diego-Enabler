@@ -7,12 +7,17 @@ import (
 
 type Runtime string
 
+const (
+	DEA   Runtime = "DEA"
+	Diego Runtime = "Diego"
+)
+
 func (r Runtime) String() string {
 	switch strings.ToLower(string(r)) {
-	case strings.ToLower(DEA):
-		return DEA
-	case strings.ToLower(Diego):
-		return Diego
+	case strings.ToLower(string(DEA)):
+		return string(DEA)
+	case strings.ToLower(string(Diego)):
+		return string(Diego)
 	default:
 		return string(r)
 	}
@@ -35,11 +40,6 @@ func ParseRuntime(runtime string) (Runtime, error) {
 		return "", fmt.Errorf("unkown runtime %s", runtime)
 	}
 }
-
-const (
-	DEA   = "DEA"
-	Diego = "Diego"
-)
 
 func sayOk() {
 	fmt.Println(say("Ok\n", 32, 1))

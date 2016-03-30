@@ -12,7 +12,7 @@ type DiegoAppsCommand struct {
 
 func (command DiegoAppsCommand) Execute([]string) error {
 	cliConnection := DiegoEnabler.CLIConnection
-	runtime := ui.Runtime(ui.Diego)
+	runtime := ui.Diego
 
 	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, runtime)
 	if err != nil {

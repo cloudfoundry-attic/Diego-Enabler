@@ -12,7 +12,7 @@ type DeaAppsCommand struct {
 
 func (command DeaAppsCommand) Execute([]string) error {
 	cliConnection := DiegoEnabler.CLIConnection
-	runtime := ui.Runtime(ui.DEA)
+	runtime := ui.DEA
 
 	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, runtime)
 	if err != nil {
