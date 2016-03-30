@@ -12,7 +12,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
-	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
+	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
@@ -97,9 +97,9 @@ func NewMigrateAppsCommand(cliConnection plugin.CliConnection, organization stri
 	}, nil
 }
 
-type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport *diego_support.DiegoSupport) bool
+type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport *diegosupport.DiegoSupport) bool
 
-func (cmd *MigrateApps) migrateApp(appPrinter *displayhelpers.AppPrinter, diegoSupport *diego_support.DiegoSupport) bool {
+func (cmd *MigrateApps) migrateApp(appPrinter *displayhelpers.AppPrinter, diegoSupport *diegosupport.DiegoSupport) bool {
 	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
 
 	var waitTime time.Duration
@@ -175,7 +175,7 @@ func processAppsChan(
 
 	output := make(chan bool, outputSize)
 
-	diegoSupport := diego_support.NewDiegoSupport(cliConnection)
+	diegoSupport := diegosupport.NewDiegoSupport(cliConnection)
 
 	for i := 0; i < maxInFlight; i++ {
 		waitDone.Add(1)

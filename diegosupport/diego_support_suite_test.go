@@ -1,4 +1,4 @@
-package diego_support_test
+package diegosupport_test
 
 import (
 	. "github.com/onsi/ginkgo"

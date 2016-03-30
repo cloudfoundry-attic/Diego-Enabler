@@ -1,4 +1,4 @@
-package diego_support
+package diegosupport
 
 import (
 	"encoding/json"

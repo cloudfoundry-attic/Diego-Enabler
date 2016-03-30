@@ -5,14 +5,14 @@ import (
 	"strings"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
-	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
+	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/plugin"
 )
 
 func ToggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName string) error {
-	d := diego_support.NewDiegoSupport(cliConnection)
+	d := diegosupport.NewDiegoSupport(cliConnection)
 
 	fmt.Printf("Setting %s Diego support to %t\n", appName, on)
 	app, err := cliConnection.GetApp(appName)

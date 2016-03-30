@@ -4,7 +4,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
+	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
 )
 
 type FakeCliConnection struct {
@@ -52,4 +52,4 @@ func (fake *FakeCliConnection) CliCommandWithoutTerminalOutputReturns(result1 []
 	}{result1, result2}
 }
 
-var _ diego_support.CliConnection = new(FakeCliConnection)
+var _ diegosupport.CliConnection = new(FakeCliConnection)

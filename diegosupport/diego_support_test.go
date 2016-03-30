@@ -1,10 +1,10 @@
-package diego_support_test
+package diegosupport_test
 
 import (
 	"errors"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
-	"github.com/cloudfoundry-incubator/diego-enabler/diego_support/fakes"
+	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
+	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport/fakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,13 +13,13 @@ import (
 var _ = Describe("DiegoSupport", func() {
 	var (
 		fakeCliConnection *fakes.FakeCliConnection
-		diegoSupport      *diego_support.DiegoSupport
+		diegoSupport      *diegosupport.DiegoSupport
 	)
 
 	BeforeEach(func() {
 		fakeCliConnection = &fakes.FakeCliConnection{}
 		fakeCliConnection.CliCommandWithoutTerminalOutputReturns([]string{""}, nil)
-		diegoSupport = diego_support.NewDiegoSupport(fakeCliConnection)
+		diegoSupport = diegosupport.NewDiegoSupport(fakeCliConnection)
 	})
 
 	Describe("SetDiegoFlag", func() {
