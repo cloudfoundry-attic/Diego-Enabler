@@ -5,22 +5,22 @@ import (
 
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
-	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/fakes"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/thingdoerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Spaces", func() {
 	var (
-		fakePaginatedRequester *fakes.FakePaginatedRequester
-		fakeSpacesParser       *fakes.FakeSpacesParser
+		fakePaginatedRequester *thingdoerfakes.FakePaginatedRequester
+		fakeSpacesParser       *thingdoerfakes.FakeSpacesParser
 		spaces                 models.Spaces
 		err                    error
 	)
 
 	BeforeEach(func() {
-		fakePaginatedRequester = new(fakes.FakePaginatedRequester)
-		fakeSpacesParser = new(fakes.FakeSpacesParser)
+		fakePaginatedRequester = new(thingdoerfakes.FakePaginatedRequester)
+		fakeSpacesParser = new(thingdoerfakes.FakeSpacesParser)
 	})
 
 	JustBeforeEach(func() {

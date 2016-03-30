@@ -6,15 +6,15 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
-	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/fakes"
+	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer/thingdoerfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("DiegoApps", func() {
 	var (
-		fakePaginatedRequester *fakes.FakePaginatedRequester
-		fakeApplicationsParser *fakes.FakeApplicationsParser
+		fakePaginatedRequester *thingdoerfakes.FakePaginatedRequester
+		fakeApplicationsParser *thingdoerfakes.FakeApplicationsParser
 		apps                   models.Applications
 
 		command thingdoer.AppsGetter
@@ -22,8 +22,8 @@ var _ = Describe("DiegoApps", func() {
 	)
 
 	BeforeEach(func() {
-		fakePaginatedRequester = new(fakes.FakePaginatedRequester)
-		fakeApplicationsParser = new(fakes.FakeApplicationsParser)
+		fakePaginatedRequester = new(thingdoerfakes.FakePaginatedRequester)
+		fakeApplicationsParser = new(thingdoerfakes.FakeApplicationsParser)
 		command = thingdoer.AppsGetter{}
 	})
 

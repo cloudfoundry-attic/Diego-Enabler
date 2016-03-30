@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
-	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport/fakes"
+	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport/diegosupportfakes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,12 +12,12 @@ import (
 
 var _ = Describe("DiegoSupport", func() {
 	var (
-		fakeCliConnection *fakes.FakeCliConnection
+		fakeCliConnection *diegosupportfakes.FakeCliConnection
 		diegoSupport      *diegosupport.DiegoSupport
 	)
 
 	BeforeEach(func() {
-		fakeCliConnection = &fakes.FakeCliConnection{}
+		fakeCliConnection = &diegosupportfakes.FakeCliConnection{}
 		fakeCliConnection.CliCommandWithoutTerminalOutputReturns([]string{""}, nil)
 		diegoSupport = diegosupport.NewDiegoSupport(fakeCliConnection)
 	})
