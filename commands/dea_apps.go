@@ -7,8 +7,8 @@ import (
 )
 
 type DeaAppsCommand struct {
-	Organization string `short:"o" long:"organization" value-name:"ORG" description:"Organization to restrict the app migration to"`
-	Space        string `short:"s" long:"space" value-name:"SPACE" description:"Space in the targeted organization to limit results to"`
+	Organization string `short:"o" value-name:"ORG" description:"Organization to restrict the app migration to"`
+	Space        string `short:"s" value-name:"SPACE" description:"Space in the targeted organization to limit results to"`
 }
 
 func (command DeaAppsCommand) Execute([]string) error {

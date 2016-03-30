@@ -13,9 +13,9 @@ type MigrateAppsPositionalArgs struct {
 
 type MigrateAppsCommand struct {
 	RequiredOptions MigrateAppsPositionalArgs `positional-args:"yes"`
-	Organization    string                    `short:"o" long:"organization" value-name:"ORG" description:"Organization to restrict the app migration to"`
-	Space           string                    `short:"s" long:"space" value-name:"SPACE" description:"Space in the targeted organization to restrict the app migration to"`
-	MaxInFlight     flaghelpers.ParallelFlag  `short:"p" long:"parallel" value-name:"MAX_IN_FLIGHT" default:"1" description:"Maximum number of apps to migrate in parallel (maximum: 100)"`
+	Organization    string                    `short:"o" value-name:"ORG" description:"Organization to restrict the app migration to"`
+	Space           string                    `short:"s" value-name:"SPACE" description:"Space in the targeted organization to restrict the app migration to"`
+	MaxInFlight     flaghelpers.ParallelFlag  `short:"p" value-name:"MAX_IN_FLIGHT" default:"1" description:"Maximum number of apps to migrate in parallel (maximum: 100)"`
 }
 
 //TODO: Figure out how to output this warning in the help
