@@ -12,7 +12,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/verificationhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/diego_support"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
@@ -28,7 +27,7 @@ type MigrateApps struct {
 }
 
 func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
-	cmd.MigrateAppsCommand.BeforeAll()
+	cmd.MigrateAppsCommand.BeforeAll() //move me to the command
 
 	httpClient := &http.Client{
 		Transport: &http.Transport{
@@ -36,7 +35,7 @@ func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 		},
 	}
 
-	apiClient, err := newAPIClient(cliConnection)
+	apiClient, err := api.NewClient(cliConnection)
 	if err != nil {
 		return err
 	}
@@ -96,29 +95,6 @@ func NewMigrateAppsCommand(cliConnection plugin.CliConnection, organization stri
 		Organization: organization,
 		Runtime:      runtime,
 	}, nil
-}
-
-func newAPIClient(cliConnection plugin.CliConnection) (*api.ApiClient, error) {
-	if err := verificationhelpers.VerifyLoggedIn(cliConnection); err != nil {
-		return nil, err
-	}
-
-	accessToken, err := cliConnection.AccessToken()
-	if err != nil {
-		return nil, err
-	}
-
-	apiEndpoint, err := cliConnection.ApiEndpoint()
-	if err != nil {
-		return nil, err
-	}
-
-	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiClient, nil
 }
 
 type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport *diego_support.DiegoSupport) bool

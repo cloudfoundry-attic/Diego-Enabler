@@ -1,42 +1,52 @@
 package api
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 )
 
-type PaginatedResponse struct {
-	TotalPages int `json:"total_pages"`
-}
-
-type PageParser struct{}
-
-func (p PageParser) Parse(body []byte) (PaginatedResponse, error) {
-	var pages PaginatedResponse
-	emptyPages := PaginatedResponse{}
-
-	err := json.Unmarshal(body, &pages)
-	if err != nil {
-		return emptyPages, err
-	}
-
-	return pages, nil
-}
-
-type ApiClient struct {
+type Client struct {
 	BaseUrl   *url.URL
 	AuthToken string
 }
 
-func NewApiClient(rawurl string, authToken string) (*ApiClient, error) {
-	u, err := url.Parse(rawurl)
+//go:generate counterfeiter . Connection
+
+type Connection interface {
+	IsLoggedIn() (bool, error)
+	IsSSLDisabled() (bool, error)
+
+	ApiEndpoint() (string, error)
+	AccessToken() (string, error)
+}
+
+var NotLoggedInError = errors.New("You must be logged in")
+
+func NewClient(connection Connection) (*Client, error) {
+	if connected, err := connection.IsLoggedIn(); !connected {
+		if err != nil {
+			return nil, err
+		}
+		return nil, NotLoggedInError
+	}
+
+	rawURL, err := connection.ApiEndpoint()
+	if err != nil {
+		return nil, err
+	}
+	u, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
 	}
 
-	client := &ApiClient{
+	authToken, err := connection.AccessToken()
+	if err != nil {
+		return nil, err
+	}
+
+	client := &Client{
 		BaseUrl:   u,
 		AuthToken: authToken,
 	}
@@ -44,7 +54,7 @@ func NewApiClient(rawurl string, authToken string) (*ApiClient, error) {
 	return client, nil
 }
 
-func (c *ApiClient) NewGetAppsRequest() (*http.Request, error) {
+func (c *Client) NewGetAppsRequest() (*http.Request, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    c.BaseUrl,
@@ -54,7 +64,7 @@ func (c *ApiClient) NewGetAppsRequest() (*http.Request, error) {
 	return req, nil
 }
 
-func (c *ApiClient) NewGetSpacesRequest() (*http.Request, error) {
+func (c *Client) NewGetSpacesRequest() (*http.Request, error) {
 	req := &http.Request{
 		Method: "GET",
 		URL:    c.BaseUrl,
@@ -64,7 +74,7 @@ func (c *ApiClient) NewGetSpacesRequest() (*http.Request, error) {
 	return req, nil
 }
 
-func (c *ApiClient) HandleFiltersAndParameters(next func() (*http.Request, error)) func(filter Filter, params map[string]interface{}) (*http.Request, error) {
+func (c *Client) HandleFiltersAndParameters(next func() (*http.Request, error)) func(filter Filter, params map[string]interface{}) (*http.Request, error) {
 	return func(filter Filter, params map[string]interface{}) (*http.Request, error) {
 		req, err := next()
 		if err != nil {
@@ -76,7 +86,7 @@ func (c *ApiClient) HandleFiltersAndParameters(next func() (*http.Request, error
 	}
 }
 
-func (c *ApiClient) Authorize(next func() (*http.Request, error)) func() (*http.Request, error) {
+func (c *Client) Authorize(next func() (*http.Request, error)) func() (*http.Request, error) {
 	return func() (*http.Request, error) {
 		req, err := next()
 		if err != nil {

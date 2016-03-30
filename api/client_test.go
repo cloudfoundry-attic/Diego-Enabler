@@ -1,35 +1,44 @@
 package api_test
 
 import (
-	. "github.com/cloudfoundry-incubator/diego-enabler/api"
+	"net/http"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/api/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net/http"
+
+	. "github.com/cloudfoundry-incubator/diego-enabler/api"
+	"github.com/cloudfoundry-incubator/diego-enabler/api/apifakes"
+	pluginfakes "github.com/cloudfoundry/cli/plugin/fakes"
 )
 
 var _ = Describe("Api", func() {
+	var (
+		apiClient *Client
+		baseUrl   string
+		authToken string
+
+		request *http.Request
+		err     error
+
+		cliConnection *pluginfakes.FakeCliConnection
+	)
+
+	BeforeEach(func() {
+		baseUrl = "https://api.my-crazy-domain.com"
+		authToken = "some-auth-token"
+
+		cliConnection = new(pluginfakes.FakeCliConnection)
+		cliConnection.AccessTokenReturns(authToken, nil)
+		cliConnection.ApiEndpointReturns(baseUrl, nil)
+		cliConnection.IsLoggedInReturns(true, nil)
+	})
+
+	JustBeforeEach(func() {
+		apiClient, err = NewClient(cliConnection)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
 	Describe("Authorize", func() {
-		var (
-			apiClient *ApiClient
-			baseUrl   string
-			authToken string
-
-			request *http.Request
-			err     error
-		)
-
-		BeforeEach(func() {
-			baseUrl = "https://api.my-crazy-domain.com"
-			authToken = "some-auth-token"
-		})
-
-		JustBeforeEach(func() {
-			apiClient, err = NewApiClient(baseUrl, authToken)
-			Expect(err).NotTo(HaveOccurred())
-		})
-
 		It("sets the Authorization header", func() {
 			reqFactory := apiClient.Authorize(func() (*http.Request, error) {
 				req := &http.Request{
@@ -49,27 +58,16 @@ var _ = Describe("Api", func() {
 
 	Describe("HandleFiltersAndParameters", func() {
 		var (
-			apiClient  *ApiClient
-			fakeFilter *fakes.FakeFilter
+			fakeFilter *apifakes.FakeFilter
 			params     map[string]interface{}
-			baseUrl    string
-			authToken  string
-
-			request *http.Request
-			err     error
 		)
 
 		BeforeEach(func() {
-			baseUrl = "https://api.my-crazy-domain.com"
-			authToken = "some-auth-token"
-			fakeFilter = new(fakes.FakeFilter)
+			fakeFilter = new(apifakes.FakeFilter)
 			params = map[string]interface{}{}
 		})
 
 		JustBeforeEach(func() {
-			apiClient, err = NewApiClient(baseUrl, authToken)
-			Expect(err).NotTo(HaveOccurred())
-
 			requestFactory := apiClient.HandleFiltersAndParameters(func() (*http.Request, error) {
 				req := &http.Request{
 					Method: "GET",
@@ -110,24 +108,7 @@ var _ = Describe("Api", func() {
 	})
 
 	Describe("NewGetAppsRequest", func() {
-		var (
-			apiClient *ApiClient
-			baseUrl   string
-			authToken string
-
-			request *http.Request
-			err     error
-		)
-
-		BeforeEach(func() {
-			baseUrl = "https://api.my-crazy-domain.com"
-			authToken = "some-auth-token"
-		})
-
 		JustBeforeEach(func() {
-			apiClient, err = NewApiClient(baseUrl, authToken)
-			Expect(err).NotTo(HaveOccurred())
-
 			request, err = apiClient.NewGetAppsRequest()
 		})
 
@@ -138,24 +119,7 @@ var _ = Describe("Api", func() {
 	})
 
 	Describe("NewGetSpacesRequest", func() {
-		var (
-			apiClient *ApiClient
-			baseUrl   string
-			authToken string
-
-			request *http.Request
-			err     error
-		)
-
-		BeforeEach(func() {
-			baseUrl = "https://api.my-crazy-domain.com"
-			authToken = "some-auth-token"
-		})
-
 		JustBeforeEach(func() {
-			apiClient, err = NewApiClient(baseUrl, authToken)
-			Expect(err).NotTo(HaveOccurred())
-
 			request, err = apiClient.NewGetSpacesRequest()
 		})
 
@@ -203,10 +167,10 @@ var _ = Describe("Api", func() {
 
 	Describe("Filters", func() {
 		It("combines its filters together with semicolons", func() {
-			filter1 := new(fakes.FakeFilter)
+			filter1 := new(apifakes.FakeFilter)
 			filter1.ToFilterQueryParamReturns("something>2")
 
-			filter2 := new(fakes.FakeFilter)
+			filter2 := new(apifakes.FakeFilter)
 			filter2.ToFilterQueryParamReturns("bar::baaz")
 
 			filters := Filters{

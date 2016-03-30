@@ -7,7 +7,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/verificationhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
@@ -17,27 +16,13 @@ import (
 )
 
 func ListApps(cliConnection plugin.CliConnection, appsGetterFunc thingdoer.AppsGetterFunc, listAppsCommand *ui.ListAppsCommand) error {
-	if err := verificationhelpers.VerifyLoggedIn(cliConnection); err != nil {
-		return err
-	}
-
-	accessToken, err := cliConnection.AccessToken()
-	if err != nil {
-		return err
-	}
-
 	listAppsCommand.BeforeAll()
 
 	pageParser := api.PageParser{}
 	appsParser := models.ApplicationsParser{}
 	spacesParser := models.SpacesParser{}
 
-	apiEndpoint, err := cliConnection.ApiEndpoint()
-	if err != nil {
-		return err
-	}
-
-	apiClient, err := api.NewApiClient(apiEndpoint, accessToken)
+	apiClient, err := api.NewClient(cliConnection)
 	if err != nil {
 		return err
 	}

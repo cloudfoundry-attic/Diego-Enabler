@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+//go:generate counterfeiter . RequestFactory
+//TODO: Fix counterfeiter to find Filter correctly #NoFilter
 type RequestFactory func(Filter, map[string]interface{}) (*http.Request, error)
 
 //go:generate counterfeiter . CloudControllerClient

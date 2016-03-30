@@ -8,16 +8,16 @@ import (
 	"strings"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/api/fakes"
+	"github.com/cloudfoundry-incubator/diego-enabler/api/apifakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("PaginatedRequester", func() {
-	var fakeRequestFactory *fakes.FakeRequestFactory
-	var fakeCloudControllerClient *fakes.FakeCloudControllerClient
-	var fakePaginatedParser *fakes.FakePaginatedParser
-	var fakeFilter *fakes.FakeFilter
+	var fakeRequestFactory *apifakes.FakeRequestFactory
+	var fakeCloudControllerClient *apifakes.FakeCloudControllerClient
+	var fakePaginatedParser *apifakes.FakePaginatedParser
+	var fakeFilter *apifakes.FakeFilter
 	var params map[string]interface{}
 	var testRequest *http.Request
 	var testResponse *http.Response
@@ -36,10 +36,10 @@ var _ = Describe("PaginatedRequester", func() {
 	}
 
 	BeforeEach(func() {
-		fakeCloudControllerClient = new(fakes.FakeCloudControllerClient)
-		fakePaginatedParser = new(fakes.FakePaginatedParser)
-		fakeRequestFactory = new(fakes.FakeRequestFactory)
-		fakeFilter = new(fakes.FakeFilter)
+		fakeCloudControllerClient = new(apifakes.FakeCloudControllerClient)
+		fakePaginatedParser = new(apifakes.FakePaginatedParser)
+		fakeRequestFactory = new(apifakes.FakeRequestFactory)
+		fakeFilter = new(apifakes.FakeFilter)
 		params = make(map[string]interface{})
 
 		testRequest, err = http.NewRequest("GET", "something", strings.NewReader(""))
