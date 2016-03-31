@@ -11,6 +11,7 @@ type Enabler struct {
 	DiegoApps       DiegoAppsCommand       `command:"diego-apps" description:"Lists all apps running on the Diego runtime that are visible to the user"`
 	DeaApps         DeaAppsCommand         `command:"dea-apps" description:"Lists all apps running on the DEA runtime that are visible to the user"`
 	MigrateApps     MigrateAppsCommand     `command:"migrate-apps" description:"Migrate all apps to Diego/DEA"`
+	UninstallPlugin UninstallHook          `command:"CLI-MESSAGE-UNINSTALL"`
 }
 
 var DiegoEnabler Enabler
