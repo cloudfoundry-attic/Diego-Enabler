@@ -1,0 +1,98 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"revision": "4b6ea7319e214d98c938f12692336f7ca9348d6b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/blang/semver",
+			"repository": "https://github.com/blang/semver",
+			"revision": "aea32c919a18e5ef4537bbd283ff29594b1b0165",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/bmizerany/pat",
+			"repository": "https://github.com/bmizerany/pat",
+			"revision": "c068ca2f0aacee5ac3681d68e4d0a003b7d1fd2c",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cloudfoundry-incubator/cli-plugin-repo/models",
+			"repository": "https://github.com/cloudfoundry-incubator/cli-plugin-repo",
+			"revision": "8efe628f4c514ccf27b668517b84609a008fead3",
+			"branch": "master",
+			"path": "/models",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cloudfoundry/cli",
+			"repository": "https://github.com/cloudfoundry/cli",
+			"revision": "767eb3853ed3140bcba3eccc39f99255b96015d7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cloudfoundry/gofileutils",
+			"repository": "https://github.com/cloudfoundry/gofileutils",
+			"revision": "94cb17960d629e2ca9a67d381228ec499966a69b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/protobuf/proto",
+			"repository": "https://github.com/golang/protobuf",
+			"revision": "dda510ac0fd43b39770f22ac6260eb91d377bce3",
+			"branch": "master",
+			"path": "/proto",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/jessevdk/go-flags",
+			"repository": "https://github.com/jessevdk/go-flags",
+			"revision": "6b9493b3cb60367edd942144879646604089e3f7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/nicksnyder/go-i18n",
+			"repository": "https://github.com/nicksnyder/go-i18n",
+			"revision": "37e5c2de3e03e4b82693e3fcb4a6aa2cc4eb07e3",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/onsi/ginkgo",
+			"repository": "https://github.com/onsi/ginkgo",
+			"revision": "c3a655f9b37a2207fa39721b078b3173ee9218d6",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/onsi/gomega",
+			"repository": "https://github.com/onsi/gomega",
+			"revision": "7ce781ea776b2fd506491011353bded2e40c8467",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "9e7f5dc375abeb9619ea3c5c58502c428f457aa2",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"revision": "a83829b6f1293c91addabc89d0571c246397bbf4",
+			"branch": "v2",
+			"notests": true
+		}
+	]
+}
