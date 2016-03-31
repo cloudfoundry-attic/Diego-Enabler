@@ -157,7 +157,7 @@ var _ = Describe("DiegoEnabler", func() {
 					session.Wait()
 
 					Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
-					Expect(session).To(gbytes.Say("Ok"))
+					Expect(session).To(gbytes.Say("OK"))
 					Expect(session.ExitCode()).To(Equal(0))
 				})
 			})
