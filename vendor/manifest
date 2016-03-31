@@ -45,6 +45,13 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/fatih/color",
+			"repository": "https://github.com/fatih/color",
+			"revision": "533cd7fd8a85905f67a1753afb4deddc85ea174f",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/golang/protobuf/proto",
 			"repository": "https://github.com/golang/protobuf",
 			"revision": "dda510ac0fd43b39770f22ac6260eb91d377bce3",
@@ -56,6 +63,20 @@
 			"importpath": "github.com/jessevdk/go-flags",
 			"repository": "https://github.com/jessevdk/go-flags",
 			"revision": "6b9493b3cb60367edd942144879646604089e3f7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mattn/go-colorable",
+			"repository": "https://github.com/mattn/go-colorable",
+			"revision": "9cbef7c35391cca05f15f8181dc0b18bc9736dbb",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mattn/go-isatty",
+			"repository": "https://github.com/mattn/go-isatty",
+			"revision": "56b76bdf51f7708750eac80fa38b952bb9f32639",
 			"branch": "master",
 			"notests": true
 		},

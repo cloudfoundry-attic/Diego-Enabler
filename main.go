@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/commands"
+	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jessevdk/go-flags"
 )
@@ -99,6 +100,7 @@ func (c *DiegoEnabler) Run(cliConnection plugin.CliConnection, args []string) {
 
 	_, err := parser.ParseArgs(args)
 	if err != nil {
+		ui.SayFailed()
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
 	}

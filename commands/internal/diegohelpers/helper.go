@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
@@ -23,7 +22,7 @@ func ToggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName str
 	if output, err := d.SetDiegoFlag(app.Guid, on); err != nil {
 		return fmt.Errorf("%s\n%s", err, strings.Join(output, "\n"))
 	}
-	displayhelpers.SayOK()
+	ui.SayOK()
 
 	fmt.Printf("Verifying %s Diego support is set to %t\n", appName, on)
 	app, err = cliConnection.GetApp(appName)
@@ -32,9 +31,8 @@ func ToggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName str
 	}
 
 	if app.Diego == on {
-		displayhelpers.SayOK()
+		ui.SayOK()
 	} else {
-		displayhelpers.SayFailed()
 		return fmt.Errorf("Diego support for %s is NOT set to %t\n\n", appName, on)
 	}
 
@@ -48,7 +46,6 @@ func IsDiegoEnabled(cliConnection plugin.CliConnection, appName string) error {
 	}
 
 	if app.Guid == "" {
-		displayhelpers.SayFailed()
 		return fmt.Errorf("App %s not found\n\n", appName)
 	}
 

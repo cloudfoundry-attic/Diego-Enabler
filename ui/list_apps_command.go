@@ -41,7 +41,7 @@ func (c *ListAppsCommand) BeforeAll() {
 }
 
 func (c *ListAppsCommand) AfterAll(apps []ApplicationPrinter) {
-	sayOk()
+	SayOK()
 
 	headers := []string{
 		"name",

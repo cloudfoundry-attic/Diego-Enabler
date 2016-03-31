@@ -41,14 +41,6 @@ func ParseRuntime(runtime string) (Runtime, error) {
 	}
 }
 
-func sayOk() {
-	fmt.Println(say("Ok\n", 32, 1))
-}
-
-func say(message string, color uint, bold int) string {
-	return fmt.Sprintf("\033[%d;%dm%s\033[0m", bold, color, message)
-}
-
 type ApplicationPrinter interface {
 	Name() string
 	Organization() string
