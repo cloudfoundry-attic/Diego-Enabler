@@ -37,7 +37,7 @@ func ParseRuntime(runtime string) (Runtime, error) {
 	case "diego":
 		return Diego, nil
 	default:
-		return "", fmt.Errorf("unkown runtime %s", runtime)
+		return "", fmt.Errorf("unknown runtime %s", runtime)
 	}
 }
 

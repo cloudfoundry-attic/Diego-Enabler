@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/diegohelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/errorhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/flaghelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/migratehelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
@@ -24,7 +25,13 @@ type MigrateAppsCommand struct {
 
 func (command MigrateAppsCommand) Execute([]string) error {
 	cliConnection := DiegoEnabler.CLIConnection
+
 	runtime, err := ui.ParseRuntime(command.RequiredOptions.Runtime)
+	if err != nil {
+		return err
+	}
+
+	err = errorhelpers.ErrorIfOrgAndSpacesSet(command.Organization, command.Space)
 	if err != nil {
 		return err
 	}

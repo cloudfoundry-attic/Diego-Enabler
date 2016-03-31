@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/diegohelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/errorhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/listhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
@@ -14,6 +15,11 @@ type DeaAppsCommand struct {
 func (command DeaAppsCommand) Execute([]string) error {
 	cliConnection := DiegoEnabler.CLIConnection
 	runtime := ui.DEA
+
+	err := errorhelpers.ErrorIfOrgAndSpacesSet(command.Organization, command.Space)
+	if err != nil {
+		return err
+	}
 
 	appsGetter, err := diegohelpers.NewAppsGetterFunc(cliConnection, command.Organization, command.Space, runtime)
 	if err != nil {
