@@ -16,7 +16,6 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
-	"github.com/cloudfoundry/cli/plugin"
 )
 
 type MigrateApps struct {
@@ -26,7 +25,7 @@ type MigrateApps struct {
 	MigrateAppsCommand *ui.MigrateAppsCommand
 }
 
-func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
+func (cmd *MigrateApps) Execute(cliConnection api.Connection) error {
 	cmd.MigrateAppsCommand.BeforeAll() //move me to the command
 
 	httpClient := &http.Client{
@@ -84,7 +83,7 @@ func (cmd *MigrateApps) Execute(cliConnection plugin.CliConnection) error {
 	return nil
 }
 
-func NewMigrateAppsCommand(cliConnection plugin.CliConnection, organizationName string, spaceName string, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
+func NewMigrateAppsCommand(cliConnection api.Connection, organizationName string, spaceName string, runtime ui.Runtime) (ui.MigrateAppsCommand, error) {
 	username, err := cliConnection.Username()
 	if err != nil {
 		return ui.MigrateAppsCommand{}, err
@@ -147,7 +146,7 @@ func (cmd *MigrateApps) migrateApp(appPrinter *displayhelpers.AppPrinter, diegoS
 	return true
 }
 
-func (cmd *MigrateApps) migrateApps(cliConnection plugin.CliConnection, apps models.Applications, spaceMap map[string]models.Space, maxInFlight int) int {
+func (cmd *MigrateApps) migrateApps(cliConnection api.Connection, apps models.Applications, spaceMap map[string]models.Space, maxInFlight int) int {
 	if len(apps) < maxInFlight {
 		maxInFlight = len(apps)
 	}
@@ -174,7 +173,7 @@ func generateAppsChan(apps models.Applications) chan models.Application {
 }
 
 func processAppsChan(
-	cliConnection plugin.CliConnection,
+	cliConnection api.Connection,
 	spaceMap map[string]models.Space,
 	migrate migrateAppFunc,
 	appsChan chan models.Application,

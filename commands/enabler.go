@@ -1,9 +1,9 @@
 package commands
 
-import "github.com/cloudfoundry/cli/plugin"
+import "github.com/cloudfoundry-incubator/diego-enabler/api"
 
 type Enabler struct {
-	CLIConnection plugin.CliConnection
+	CLIConnection api.Connection
 
 	EnableDiego     EnableDiegoCommand     `command:"enable-diego" description:"enable Diego support for an app"`
 	DisableDiego    DisableDiegoCommand    `command:"disable-diego" description:"disable Diego support for an app"`

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/cloudfoundry/cli/plugin/models"
 )
 
 type Client struct {
@@ -16,12 +18,15 @@ type Client struct {
 
 type Connection interface {
 	IsLoggedIn() (bool, error)
-	IsSSLDisabled() (bool, error)
-
 	ApiEndpoint() (string, error)
 	AccessToken() (string, error)
 
 	Username() (string, error)
+
+	CliCommandWithoutTerminalOutput(args ...string) ([]string, error)
+	GetApp(string) (plugin_models.GetAppModel, error)
+	GetOrg(string) (plugin_models.GetOrg_Model, error)
+	GetSpace(string) (plugin_models.GetSpace_Model, error)
 }
 
 var NotLoggedInError = errors.New("You must be logged in")

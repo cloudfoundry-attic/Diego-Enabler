@@ -12,10 +12,9 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
-	"github.com/cloudfoundry/cli/plugin"
 )
 
-func ListApps(cliConnection plugin.CliConnection, appsGetterFunc thingdoer.AppsGetterFunc, listAppsCommand *ui.ListAppsCommand) error {
+func ListApps(cliConnection api.Connection, appsGetterFunc thingdoer.AppsGetterFunc, listAppsCommand *ui.ListAppsCommand) error {
 	listAppsCommand.BeforeAll()
 
 	pageParser := api.PageParser{}
@@ -83,7 +82,7 @@ func ListApps(cliConnection plugin.CliConnection, appsGetterFunc thingdoer.AppsG
 	return nil
 }
 
-func NewListAppsCommand(cliConnection plugin.CliConnection, orgName string, spaceName string, runtime ui.Runtime) (ui.ListAppsCommand, error) {
+func NewListAppsCommand(cliConnection api.Connection, orgName string, spaceName string, runtime ui.Runtime) (ui.ListAppsCommand, error) {
 	username, err := cliConnection.Username()
 	if err != nil {
 		return ui.ListAppsCommand{}, err

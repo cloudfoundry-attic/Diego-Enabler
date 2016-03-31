@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cloudfoundry-incubator/diego-enabler/api"
 	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
-	"github.com/cloudfoundry/cli/plugin"
 )
 
-func ToggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName string) error {
+func ToggleDiegoSupport(on bool, cliConnection api.Connection, appName string) error {
 	d := diegosupport.NewDiegoSupport(cliConnection)
 
 	fmt.Printf("Setting %s Diego support to %t\n", appName, on)
@@ -39,7 +39,7 @@ func ToggleDiegoSupport(on bool, cliConnection plugin.CliConnection, appName str
 	return nil
 }
 
-func IsDiegoEnabled(cliConnection plugin.CliConnection, appName string) error {
+func IsDiegoEnabled(cliConnection api.Connection, appName string) error {
 	app, err := cliConnection.GetApp(appName)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (e SpaceNotFoundErr) Error() string {
 }
 
 func NewAppsGetterFunc(
-	cliConnection plugin.CliConnection,
+	cliConnection api.Connection,
 	orgName string,
 	spaceName string,
 	runtime ui.Runtime,
