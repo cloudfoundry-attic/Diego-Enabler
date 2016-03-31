@@ -1,6 +1,6 @@
 package commands
 
-import "github.com/cloudfoundry-incubator/diego-enabler/commands/internal/diegohelpers"
+import "github.com/cloudfoundry-incubator/diego-enabler/commands/diegohelpers"
 
 type DisableDiegoCommand struct {
 	RequiredOptions DisableDiegoPositionalArgs `positional-args:"yes"`

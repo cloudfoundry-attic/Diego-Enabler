@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/displayhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"

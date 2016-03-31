@@ -1,9 +1,9 @@
 package commands
 
 import (
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/diegohelpers"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/flaghelpers"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/migratehelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/diegohelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/flaghelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/migratehelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
 

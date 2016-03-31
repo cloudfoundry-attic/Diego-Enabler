@@ -1,7 +1,7 @@
 package flaghelpers_test
 
 import (
-	. "github.com/cloudfoundry-incubator/diego-enabler/commands/internal/flaghelpers"
+	. "github.com/cloudfoundry-incubator/diego-enabler/commands/flaghelpers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/displayhelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/displayhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 	"github.com/cloudfoundry-incubator/diego-enabler/thingdoer"

@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/diegohelpers"
-	"github.com/cloudfoundry-incubator/diego-enabler/commands/internal/listhelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/diegohelpers"
+	"github.com/cloudfoundry-incubator/diego-enabler/commands/listhelpers"
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
 
