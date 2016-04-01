@@ -131,6 +131,7 @@ func NewHttpClient(cliConnection Connection) (*http.Client, error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
+			Proxy:           http.ProxyFromEnvironment,
 		},
 	}
 	return httpClient, nil
