@@ -16,6 +16,13 @@ type FakeConnection struct {
 		result1 bool
 		result2 error
 	}
+	IsSSLDisabledStub        func() (bool, error)
+	isSSLDisabledMutex       sync.RWMutex
+	isSSLDisabledArgsForCall []struct{}
+	isSSLDisabledReturns     struct {
+		result1 bool
+		result2 error
+	}
 	ApiEndpointStub        func() (string, error)
 	apiEndpointMutex       sync.RWMutex
 	apiEndpointArgsForCall []struct{}
@@ -95,6 +102,31 @@ func (fake *FakeConnection) IsLoggedInCallCount() int {
 func (fake *FakeConnection) IsLoggedInReturns(result1 bool, result2 error) {
 	fake.IsLoggedInStub = nil
 	fake.isLoggedInReturns = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeConnection) IsSSLDisabled() (bool, error) {
+	fake.isSSLDisabledMutex.Lock()
+	fake.isSSLDisabledArgsForCall = append(fake.isSSLDisabledArgsForCall, struct{}{})
+	fake.isSSLDisabledMutex.Unlock()
+	if fake.IsSSLDisabledStub != nil {
+		return fake.IsSSLDisabledStub()
+	} else {
+		return fake.isSSLDisabledReturns.result1, fake.isSSLDisabledReturns.result2
+	}
+}
+
+func (fake *FakeConnection) IsSSLDisabledCallCount() int {
+	fake.isSSLDisabledMutex.RLock()
+	defer fake.isSSLDisabledMutex.RUnlock()
+	return len(fake.isSSLDisabledArgsForCall)
+}
+
+func (fake *FakeConnection) IsSSLDisabledReturns(result1 bool, result2 error) {
+	fake.IsSSLDisabledStub = nil
+	fake.isSSLDisabledReturns = struct {
 		result1 bool
 		result2 error
 	}{result1, result2}

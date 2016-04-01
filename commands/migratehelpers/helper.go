@@ -1,9 +1,7 @@
 package migratehelpers
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -28,12 +26,6 @@ type MigrateApps struct {
 func (cmd *MigrateApps) Execute(cliConnection api.Connection) error {
 	cmd.MigrateAppsCommand.BeforeAll() //move me to the command
 
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
 	apiClient, err := api.NewClient(cliConnection)
 	if err != nil {
 		return err
@@ -43,14 +35,14 @@ func (cmd *MigrateApps) Execute(cliConnection api.Connection) error {
 		apiClient.Authorize(apiClient.NewGetAppsRequest),
 	)
 
-	pageParser := api.PageParser{}
+	appPaginatedRequester, err := api.NewPaginatedRequester(cliConnection, appRequestFactory)
+	if err != nil {
+		return err
+	}
+
 	apps, err := cmd.AppsGetterFunc(
 		models.ApplicationsParser{},
-		&api.PaginatedRequester{
-			RequestFactory: appRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
+		appPaginatedRequester,
 	)
 	if err != nil {
 		return err
@@ -60,13 +52,14 @@ func (cmd *MigrateApps) Execute(cliConnection api.Connection) error {
 		apiClient.Authorize(apiClient.NewGetSpacesRequest),
 	)
 
+	spacePaginatedRequester, err := api.NewPaginatedRequester(cliConnection, spaceRequestFactory)
+	if err != nil {
+		return err
+	}
+
 	spaces, err := thingdoer.Spaces(
 		models.SpacesParser{},
-		&api.PaginatedRequester{
-			RequestFactory: spaceRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
+		spacePaginatedRequester,
 	)
 	if err != nil {
 		return err

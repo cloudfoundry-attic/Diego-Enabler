@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -18,6 +19,7 @@ type Client struct {
 
 type Connection interface {
 	IsLoggedIn() (bool, error)
+	IsSSLDisabled() (bool, error)
 	ApiEndpoint() (string, error)
 	AccessToken() (string, error)
 
@@ -119,4 +121,17 @@ func generateParams(filter Filter, params map[string]interface{}) url.Values {
 		values.Set(k, fmt.Sprint(v))
 	}
 	return values
+}
+
+func NewHttpClient(cliConnection Connection) (*http.Client, error) {
+	skipVerify, err := cliConnection.IsSSLDisabled()
+	if err != nil {
+		return nil, err
+	}
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
+		},
+	}
+	return httpClient, nil
 }

@@ -1,8 +1,6 @@
 package listhelpers
 
 import (
-	"crypto/tls"
-	"net/http"
 	"os"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
@@ -17,7 +15,6 @@ import (
 func ListApps(cliConnection api.Connection, appsGetterFunc thingdoer.AppsGetterFunc, listAppsCommand *ui.ListAppsCommand) error {
 	listAppsCommand.BeforeAll()
 
-	pageParser := api.PageParser{}
 	appsParser := models.ApplicationsParser{}
 	spacesParser := models.SpacesParser{}
 
@@ -26,23 +23,18 @@ func ListApps(cliConnection api.Connection, appsGetterFunc thingdoer.AppsGetterF
 		return err
 	}
 
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
 	appRequestFactory := apiClient.HandleFiltersAndParameters(
 		apiClient.Authorize(apiClient.NewGetAppsRequest),
 	)
 
+	appPaginatedRequester, err := api.NewPaginatedRequester(cliConnection, appRequestFactory)
+	if err != nil {
+		return err
+	}
+
 	apps, err := appsGetterFunc(
 		appsParser,
-		&api.PaginatedRequester{
-			RequestFactory: appRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
+		appPaginatedRequester,
 	)
 	if err != nil {
 		return err
@@ -51,14 +43,14 @@ func ListApps(cliConnection api.Connection, appsGetterFunc thingdoer.AppsGetterF
 	spaceRequestFactory := apiClient.HandleFiltersAndParameters(
 		apiClient.Authorize(apiClient.NewGetSpacesRequest),
 	)
+	spacesPaginatedRequester, err := api.NewPaginatedRequester(cliConnection, spaceRequestFactory)
+	if err != nil {
+		return err
+	}
 
 	spaces, err := thingdoer.Spaces(
 		spacesParser,
-		&api.PaginatedRequester{
-			RequestFactory: spaceRequestFactory,
-			Client:         httpClient,
-			PageParser:     pageParser,
-		},
+		spacesPaginatedRequester,
 	)
 	if err != nil {
 		return err

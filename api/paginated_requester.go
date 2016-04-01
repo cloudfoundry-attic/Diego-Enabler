@@ -25,6 +25,21 @@ type PaginatedRequester struct {
 	PageParser     PaginatedParser
 }
 
+func NewPaginatedRequester(cliConnection Connection, requestFactory RequestFactory) (*PaginatedRequester, error) {
+	pageParser := PageParser{}
+
+	httpClient, err := NewHttpClient(cliConnection)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PaginatedRequester{
+		RequestFactory: requestFactory,
+		Client:         httpClient,
+		PageParser:     pageParser,
+	}, nil
+}
+
 func (p *PaginatedRequester) Do(filter Filter, params map[string]interface{}) ([][]byte, error) {
 	var noBodies [][]byte
 
