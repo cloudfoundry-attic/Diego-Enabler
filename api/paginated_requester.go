@@ -40,6 +40,7 @@ func (p *PaginatedRequester) Do(filter Filter, params map[string]interface{}) ([
 		return noBodies, err
 	}
 
+	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return noBodies, err
@@ -65,6 +66,7 @@ func (p *PaginatedRequester) Do(filter Filter, params map[string]interface{}) ([
 			return noBodies, err
 		}
 
+		defer res.Body.Close()
 		body, err = ioutil.ReadAll(res.Body)
 		if err != nil {
 			return noBodies, err
