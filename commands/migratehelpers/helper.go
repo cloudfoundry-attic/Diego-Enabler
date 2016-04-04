@@ -1,7 +1,6 @@
 package migratehelpers
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -127,11 +126,10 @@ func (cmd *MigrateApps) MigrateApp(
 
 	_, err := diegoSupport.SetDiegoFlag(appPrinter.App.Guid, cmd.Runtime == ui.Diego)
 	if err != nil {
-		if strings.Contains(err.Error(), "NotAuthorized"){
+		if strings.Contains(err.Error(), "NotAuthorized") {
 			cmd.MigrateAppsCommand.UserWarning(appPrinter)
 		} else {
-			fmt.Println("Error: ", err)
-			fmt.Println("Continuing...")
+			cmd.MigrateAppsCommand.FailMigrate(appPrinter, err)
 		}
 		return false
 	}

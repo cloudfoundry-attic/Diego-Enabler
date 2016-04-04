@@ -90,7 +90,7 @@ var _ = Describe("MigrateApps", func() {
 
 				It("returns an error", func() {
 					Expect(success).To(BeFalse())
-					Eventually(buf).Should(gbytes.Say("Error"))
+					Eventually(buf).Should(gbytes.Say("Error: Failed to migrate app"))
 				})
 			})
 		})

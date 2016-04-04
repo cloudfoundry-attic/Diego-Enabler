@@ -82,3 +82,15 @@ func (c *MigrateAppsCommand) UserWarning(app ApplicationPrinter) {
 		terminal.EntityNameColor(c.Username),
 	)
 }
+
+func (c *MigrateAppsCommand) FailMigrate(app ApplicationPrinter, err error) {
+	fmt.Printf(
+		"Error: Failed to migrate app %s to %s in space %s / org %s as %s: %s",
+		terminal.EntityNameColor(app.Name()),
+		terminal.EntityNameColor(c.Runtime.String()),
+		terminal.EntityNameColor(app.Space()),
+		terminal.EntityNameColor(app.Organization()),
+	  terminal.EntityNameColor(c.Username),
+		terminal.EntityNameColor(err.Error()),
+	)
+}
