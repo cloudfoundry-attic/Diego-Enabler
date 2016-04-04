@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("MigrateApps", func() {
+var _ = Describe("MigrateAppsCommand", func() {
 	var (
 		command         MigrateAppsCommand
 		requiredOptions MigrateAppsPositionalArgs

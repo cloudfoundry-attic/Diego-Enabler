@@ -71,3 +71,14 @@ func (c *MigrateAppsCommand) AfterAll(attempts, warnings int) {
 	fmt.Println()
 	fmt.Printf("Migration to %s completed: %d apps, %d warnings\n", terminal.EntityNameColor(c.Runtime.String()), attempts, warnings)
 }
+
+func (c *MigrateAppsCommand) UserWarning(app ApplicationPrinter) {
+	fmt.Printf(
+		"WARNING: No authorization to migrate app %s to %s in space %s / org %s as %s\n",
+		terminal.EntityNameColor(app.Name()),
+		terminal.EntityNameColor(c.Runtime.String()),
+		terminal.EntityNameColor(app.Space()),
+		terminal.EntityNameColor(app.Organization()),
+		terminal.EntityNameColor(c.Username),
+	)
+}

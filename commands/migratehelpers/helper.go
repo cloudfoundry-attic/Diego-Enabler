@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"sync"
@@ -98,9 +99,17 @@ func NewMigrateAppsCommand(cliConnection api.Connection, organizationName string
 	}, nil
 }
 
-type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport *diegosupport.DiegoSupport) bool
+type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport DiegoFlagSetter) bool
 
-func (cmd *MigrateApps) migrateApp(appPrinter *displayhelpers.AppPrinter, diegoSupport *diegosupport.DiegoSupport) bool {
+//go:generate counterfeiter . DiegoFlagSetter
+type DiegoFlagSetter interface {
+	SetDiegoFlag(string, bool) ([]string, error)
+}
+
+func (cmd *MigrateApps) MigrateApp(
+	appPrinter *displayhelpers.AppPrinter,
+	diegoSupport DiegoFlagSetter,
+) bool {
 	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
 
 	var waitTime time.Duration
@@ -118,9 +127,12 @@ func (cmd *MigrateApps) migrateApp(appPrinter *displayhelpers.AppPrinter, diegoS
 
 	_, err := diegoSupport.SetDiegoFlag(appPrinter.App.Guid, cmd.Runtime == ui.Diego)
 	if err != nil {
-		fmt.Println("Error: ", err)
-		fmt.Println("Continuing...")
-		// WARNING: No authorization to migrate app APP_NAME in org ORG_NAME / space SPACE_NAME to RUNTIME as PERSON...
+		if strings.Contains(err.Error(), "NotAuthorized"){
+			cmd.MigrateAppsCommand.UserWarning(appPrinter)
+		} else {
+			fmt.Println("Error: ", err)
+			fmt.Println("Continuing...")
+		}
 		return false
 	}
 
@@ -145,7 +157,7 @@ func (cmd *MigrateApps) migrateApps(cliConnection api.Connection, apps models.Ap
 	}
 
 	runningAppsChan := generateAppsChan(apps)
-	outputsChan, waitDone := processAppsChan(cliConnection, spaceMap, cmd.migrateApp, runningAppsChan, maxInFlight, len(apps))
+	outputsChan, waitDone := processAppsChan(cliConnection, spaceMap, cmd.MigrateApp, runningAppsChan, maxInFlight, len(apps))
 
 	waitDone.Wait()
 	close(outputsChan)
