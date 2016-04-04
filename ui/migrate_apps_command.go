@@ -67,9 +67,10 @@ func (c *MigrateAppsCommand) DuringEach(app ApplicationPrinter) {
 	fmt.Print(".")
 }
 
-func (c *MigrateAppsCommand) AfterAll(attempts, warnings int) {
+func (c *MigrateAppsCommand) AfterAll(attempts, warnings int, errors int) {
+	successes := attempts - warnings - errors
 	fmt.Println()
-	fmt.Printf("Migration to %s completed: %d apps, %d warnings\n", terminal.EntityNameColor(c.Runtime.String()), attempts, warnings)
+	fmt.Printf("Migration to %s completed: %d apps, %d errors, %d warnings\n", terminal.EntityNameColor(c.Runtime.String()), successes, errors, warnings)
 }
 
 func (c *MigrateAppsCommand) UserWarning(app ApplicationPrinter) {
@@ -90,7 +91,7 @@ func (c *MigrateAppsCommand) FailMigrate(app ApplicationPrinter, err error) {
 		terminal.EntityNameColor(c.Runtime.String()),
 		terminal.EntityNameColor(app.Space()),
 		terminal.EntityNameColor(app.Organization()),
-	  terminal.EntityNameColor(c.Username),
+		terminal.EntityNameColor(c.Username),
 		terminal.EntityNameColor(err.Error()),
 	)
 }

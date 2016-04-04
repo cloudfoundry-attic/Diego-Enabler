@@ -24,7 +24,7 @@ var _ = Describe("MigrateApps", func() {
 	Describe("MigrateApp", func() {
 		Context("when migrating the app fails", func() {
 			var (
-				success      bool
+				success      int
 				diegoSupport *migratehelpersfakes.FakeDiegoFlagSetter
 				appPrinter   *displayhelpers.AppPrinter
 				buf          *gbytes.Buffer
@@ -78,7 +78,7 @@ var _ = Describe("MigrateApps", func() {
 				})
 
 				It("returns a warning", func() {
-					Expect(success).To(BeFalse())
+					Expect(success).To(Equal(Warning))
 					Eventually(buf).Should(gbytes.Say("WARNING"))
 				})
 			})
@@ -89,7 +89,7 @@ var _ = Describe("MigrateApps", func() {
 				})
 
 				It("returns an error", func() {
-					Expect(success).To(BeFalse())
+					Expect(success).To(Equal(Err))
 					Eventually(buf).Should(gbytes.Say("Error: Failed to migrate app"))
 				})
 			})

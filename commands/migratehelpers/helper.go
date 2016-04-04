@@ -16,6 +16,12 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/ui"
 )
 
+const (
+	Success = iota
+	Warning
+	Err
+)
+
 type MigrateApps struct {
 	MaxInFlight        int
 	Runtime            ui.Runtime
@@ -70,8 +76,8 @@ func (cmd *MigrateApps) Execute(cliConnection api.Connection) error {
 		spaceMap[space.Guid] = space
 	}
 
-	warnings := cmd.migrateApps(cliConnection, apps, spaceMap, cmd.MaxInFlight)
-	cmd.MigrateAppsCommand.AfterAll(len(apps), warnings)
+	warnings, errors := cmd.migrateApps(cliConnection, apps, spaceMap, cmd.MaxInFlight)
+	cmd.MigrateAppsCommand.AfterAll(len(apps), warnings, errors)
 
 	return nil
 }
@@ -98,7 +104,7 @@ func NewMigrateAppsCommand(cliConnection api.Connection, organizationName string
 	}, nil
 }
 
-type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport DiegoFlagSetter) bool
+type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport DiegoFlagSetter) int
 
 //go:generate counterfeiter . DiegoFlagSetter
 type DiegoFlagSetter interface {
@@ -108,7 +114,7 @@ type DiegoFlagSetter interface {
 func (cmd *MigrateApps) MigrateApp(
 	appPrinter *displayhelpers.AppPrinter,
 	diegoSupport DiegoFlagSetter,
-) bool {
+) int {
 	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
 
 	var waitTime time.Duration
@@ -128,10 +134,11 @@ func (cmd *MigrateApps) MigrateApp(
 	if err != nil {
 		if strings.Contains(err.Error(), "NotAuthorized") {
 			cmd.MigrateAppsCommand.UserWarning(appPrinter)
+			return Warning
 		} else {
 			cmd.MigrateAppsCommand.FailMigrate(appPrinter, err)
+			return Err
 		}
-		return false
 	}
 
 	printDot := time.NewTicker(5 * time.Second)
@@ -146,10 +153,10 @@ func (cmd *MigrateApps) MigrateApp(
 
 	cmd.MigrateAppsCommand.CompletedEach(appPrinter)
 
-	return true
+	return Success
 }
 
-func (cmd *MigrateApps) migrateApps(cliConnection api.Connection, apps models.Applications, spaceMap map[string]models.Space, maxInFlight int) int {
+func (cmd *MigrateApps) migrateApps(cliConnection api.Connection, apps models.Applications, spaceMap map[string]models.Space, maxInFlight int) (int, int) {
 	if len(apps) < maxInFlight {
 		maxInFlight = len(apps)
 	}
@@ -181,10 +188,10 @@ func processAppsChan(
 	migrate migrateAppFunc,
 	appsChan chan models.Application,
 	maxInFlight int,
-	outputSize int) (chan bool, *sync.WaitGroup) {
+	outputSize int) (chan int, *sync.WaitGroup) {
 	var waitDone sync.WaitGroup
 
-	output := make(chan bool, outputSize)
+	output := make(chan int, outputSize)
 
 	diegoSupport := diegosupport.NewDiegoSupport(cliConnection)
 
@@ -206,14 +213,18 @@ func processAppsChan(
 	return output, &waitDone
 }
 
-func outputAppsChan(outputsChan chan bool) int {
+func outputAppsChan(outputsChan chan int) (int, int) {
 	warnings := 0
+	errors := 0
 
-	for success := range outputsChan {
-		if !success {
+	for result := range outputsChan {
+		switch result {
+		case Warning:
 			warnings++
+		case Err:
+			errors++
+		default:
 		}
 	}
-
-	return warnings
+	return warnings, errors
 }
