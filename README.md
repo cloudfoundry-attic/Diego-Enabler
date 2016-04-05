@@ -51,3 +51,4 @@ To create release.
 1. Run `bin/build`
 1. Run `git tag vX.X.X` and `git push --tags`
 1. Run `bin/release`
+1. Update release in `cli-plugin-repo`, generate checksum with `openssl sha1 binary`
