@@ -17,8 +17,8 @@ func (c *DiegoEnabler) GetMetadata() plugin.PluginMetadata {
 		Name: "Diego-Enabler",
 		Version: plugin.VersionType{
 			Major: 1,
-			Minor: 0,
-			Build: 1,
+			Minor: 2,
+			Build: 0,
 		},
 		Commands: []plugin.Command{
 			{
