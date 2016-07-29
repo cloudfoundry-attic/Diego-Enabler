@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+	"strings"
 )
 
 //go:generate counterfeiter . CliConnection
@@ -33,7 +34,7 @@ func (d *DiegoSupport) SetDiegoFlag(appGuid string, enable bool) ([]string, erro
 		return output, err
 	}
 
-	if err = checkDiegoError(output[0]); err != nil {
+	if err = checkDiegoError(strings.Join(output, "")); err != nil {
 		return output, err
 	}
 
