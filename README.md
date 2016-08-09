@@ -48,6 +48,7 @@ To create release.
 1. Export Github personal access token with `public_repo` permission to `$GITHUB_TOKEN`
 1. Make sure the release version is updated in the PluginMetadata in `main.go`
 1. Make sure the release version is updated in the file `VERSION`
+1. Add and commit the files.
 1. Run `bin/build`
 1. Run `git tag vX.X.X` and `git push --tags`
 1. Run `bin/release`
