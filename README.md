@@ -25,7 +25,7 @@ Command             |Usage                                                      
 To install the plugin from the CF Community repository:
 
 ```
-$ cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
+$ cf add-plugin-repo CF-Community https://plugins.cloudfoundry.org/
 $ cf install-plugin Diego-Enabler -r CF-Community
 ```
 
