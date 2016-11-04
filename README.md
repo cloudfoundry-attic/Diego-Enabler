@@ -38,18 +38,3 @@ Then call `cf install-plugin` with either the URL you copied or the binary you d
 ```
   cf install-plugin [URL|binary]
 ```
-
-## Release
-
-To create release.
-
-1. [Gox](https://github.com/mitchellh/gox) must be installed
-1. [Github release](https://github.com/aktau/github-release) must be installed
-1. Export Github personal access token with `public_repo` permission to `$GITHUB_TOKEN`
-1. Make sure the release version is updated in the PluginMetadata in `main.go`
-1. Make sure the release version is updated in the file `VERSION`
-1. Add and commit the files.
-1. Run `bin/build`
-1. Run `git tag vX.X.X` and `git push --tags`
-1. Run `bin/release`
-1. Update release in `cli-plugin-repo`, generate checksum with `openssl sha1 binary`
