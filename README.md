@@ -31,7 +31,7 @@ $ cf install-plugin Diego-Enabler -r CF-Community
 
 To install the plugin from GitHub:
 
-First, copy the URL or download the binary for your platform from the [latest release page](https://github.com/cloudfoundry-incubator/Diego-Enabler/releases/latest).
+First, copy the URL or download the binary for your OS/platform from the [latest release page](https://github.com/cloudfoundry-incubator/Diego-Enabler/releases/latest).
 
 Then call `cf install-plugin` with either the URL you copied or the binary you downloaded:
 
