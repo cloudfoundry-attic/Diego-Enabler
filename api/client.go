@@ -29,6 +29,7 @@ type Connection interface {
 	GetApp(string) (plugin_models.GetAppModel, error)
 	GetOrg(string) (plugin_models.GetOrg_Model, error)
 	GetSpace(string) (plugin_models.GetSpace_Model, error)
+	GetCurrentSpace() (plugin_models.Space, error)
 }
 
 var NotLoggedInError = errors.New("You must be logged in")

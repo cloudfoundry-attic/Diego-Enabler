@@ -2,6 +2,7 @@ package diegohelpers
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/api"
@@ -15,6 +16,11 @@ func ToggleDiegoSupport(on bool, cliConnection api.Connection, appName string) e
 
 	fmt.Printf("Setting %s Diego support to %t\n", appName, on)
 	app, err := cliConnection.GetApp(appName)
+	if err != nil {
+		return err
+	}
+
+	err = d.WarnNoRoutes(appName, os.Stderr)
 	if err != nil {
 		return err
 	}

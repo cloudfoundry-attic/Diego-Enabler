@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 
 	"github.com/cloudfoundry/cli/plugin/models"
@@ -80,7 +81,7 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					session.Wait()
-					Expect(rpcHandlers.GetAppCallCount()).To(Equal(2))
+					Expect(rpcHandlers.GetAppCallCount()).To(Equal(3))
 				})
 			})
 
@@ -161,6 +162,60 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(session).To(gbytes.Say("Verifying test-app Diego support is set to true"))
 					Expect(session).To(gbytes.Say("FAILED"))
 					Expect(session.ExitCode()).To(Equal(1))
+				})
+			})
+
+			Context("when the app has no routes", func() {
+				BeforeEach(func() {
+					rpcHandlers.GetAppStub = func(appName string, retVal *plugin_models.GetAppModel) error {
+						Expect(appName).To(Equal("test-app"))
+
+						*retVal = plugin_models.GetAppModel{
+							Guid: "test-app-guid",
+							Name: "test-app",
+						}
+						return nil
+					}
+
+					rpcHandlers.GetCurrentSpaceStub = func(_ string, retVal *plugin_models.Space) error {
+						*retVal = plugin_models.Space{
+							SpaceFields: plugin_models.SpaceFields{
+								Name: "some-space",
+							},
+						}
+						return nil
+					}
+
+					rpcHandlers.GetSpaceStub = func(spaceName string, retVal *plugin_models.GetSpace_Model) error {
+						if spaceName != "some-space" {
+							return fmt.Errorf("expected spaceName argument to be %s, was %s", "some-space", spaceName)
+						}
+						*retVal = plugin_models.GetSpace_Model{
+							GetSpaces_Model: plugin_models.GetSpaces_Model{
+								Name: "some-space",
+							},
+							Organization: plugin_models.GetSpace_Orgs{Name: "some-org"},
+						}
+						return nil
+					}
+
+					rpcHandlers.UsernameStub = func(_ string, retVal *string) error {
+						*retVal = "some-user"
+						return nil
+					}
+				})
+
+				It("warns the user that the health check type will be set to none", func() {
+					session, err := gexec.Start(exec.Command(validPluginPath, args...), GinkgoWriter, GinkgoWriter)
+					Expect(err).NotTo(HaveOccurred())
+
+					session.Wait()
+					Expect(session.Err).To(gbytes.Say("WARNING: Assuming health check of type process \\('none'\\) for app with no mapped routes. Use 'cf set-health-check' to change this. App test-app to Diego/DEA in space some-space / org some-org as some-user"))
+					Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
+
+					output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
+					Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
+					Expect(output[5]).To(ContainSubstring(`"diego":true`))
 				})
 			})
 		})

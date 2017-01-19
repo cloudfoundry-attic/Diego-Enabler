@@ -5,9 +5,11 @@ import (
 
 	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
 	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport/diegosupportfakes"
+	"github.com/cloudfoundry/cli/plugin/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("DiegoSupport", func() {
@@ -90,6 +92,148 @@ var _ = Describe("DiegoSupport", func() {
 				Expect(output[0]).To(ContainSubstring("12345"))
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("12345 - diego not supported"))
+			})
+		})
+	})
+
+	Describe("WarnNoRoutes", func() {
+		var (
+			output *gbytes.Buffer
+		)
+
+		BeforeEach(func() {
+			output = gbytes.NewBuffer()
+		})
+
+		Context("when the app has no routes", func() {
+			BeforeEach(func() {
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, nil)
+				fakeCliConnection.GetCurrentSpaceReturns(plugin_models.Space{
+					SpaceFields: plugin_models.SpaceFields{
+						Name: "some-space",
+					},
+				}, nil)
+				fakeCliConnection.GetSpaceReturns(plugin_models.GetSpace_Model{
+					GetSpaces_Model: plugin_models.GetSpaces_Model{
+						Name: "some-space",
+					},
+					Organization: plugin_models.GetSpace_Orgs{
+						Name: "some-org",
+					},
+				}, nil)
+
+				fakeCliConnection.UsernameReturns("some-user", nil)
+			})
+
+			It("writes a warning to the output", func() {
+				err := diegoSupport.WarnNoRoutes("some-app", output)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(fakeCliConnection.GetAppCallCount()).To(Equal(1))
+				Expect(fakeCliConnection.GetAppArgsForCall(0)).To(Equal("some-app"))
+
+				Expect(fakeCliConnection.GetCurrentSpaceCallCount()).To(Equal(1))
+
+				Expect(fakeCliConnection.GetSpaceCallCount()).To(Equal(1))
+				Expect(fakeCliConnection.GetSpaceArgsForCall(0)).To(Equal("some-space"))
+
+				Expect(fakeCliConnection.UsernameCallCount()).To(Equal(1))
+
+				Expect(output).To(gbytes.Say("WARNING: Assuming health check of type process \\('none'\\) for app with no mapped routes. Use 'cf set-health-check' to change this. App some-app to Diego/DEA in space some-space / org some-org as some-user"))
+			})
+		})
+
+		Context("when the app has routes", func() {
+			BeforeEach(func() {
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{
+					Routes: []plugin_models.GetApp_RouteSummary{
+						{},
+					},
+				}, nil)
+			})
+
+			It("does not write a warning to the output", func() {
+				err := diegoSupport.WarnNoRoutes("some-app", output)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(output.Contents()).To(BeEmpty())
+			})
+		})
+
+		Context("when getting the app returns an error", func() {
+			var expectedError error
+
+			BeforeEach(func() {
+				expectedError = errors.New("some-error")
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, expectedError)
+			})
+
+			It("returns the error", func() {
+				err := diegoSupport.WarnNoRoutes("some-app", output)
+				Expect(err).To(MatchError(expectedError))
+			})
+		})
+
+		Context("when getting the current space returns an error", func() {
+			var expectedError error
+
+			BeforeEach(func() {
+				expectedError = errors.New("some-error")
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, nil)
+				fakeCliConnection.GetCurrentSpaceReturns(plugin_models.Space{}, expectedError)
+			})
+
+			It("returns the error", func() {
+				err := diegoSupport.WarnNoRoutes("some-app", output)
+				Expect(err).To(MatchError(expectedError))
+			})
+		})
+
+		Context("when getting the space returns an error", func() {
+			var expectedError error
+
+			BeforeEach(func() {
+				expectedError = errors.New("some-error")
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, nil)
+				fakeCliConnection.GetCurrentSpaceReturns(plugin_models.Space{
+					SpaceFields: plugin_models.SpaceFields{
+						Name: "some-space",
+					},
+				}, nil)
+				fakeCliConnection.GetSpaceReturns(plugin_models.GetSpace_Model{}, expectedError)
+			})
+
+			It("returns the error", func() {
+				err := diegoSupport.WarnNoRoutes("some-app", output)
+				Expect(err).To(MatchError(expectedError))
+			})
+		})
+
+		Context("when getting the username returns an error", func() {
+			var expectedError error
+			BeforeEach(func() {
+				expectedError = errors.New("some-error")
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, nil)
+				fakeCliConnection.GetCurrentSpaceReturns(plugin_models.Space{
+					SpaceFields: plugin_models.SpaceFields{
+						Name: "some-space",
+					},
+				}, nil)
+				fakeCliConnection.GetSpaceReturns(plugin_models.GetSpace_Model{
+					GetSpaces_Model: plugin_models.GetSpaces_Model{
+						Name: "some-space",
+					},
+					Organization: plugin_models.GetSpace_Orgs{
+						Name: "some-org",
+					},
+				}, nil)
+
+				fakeCliConnection.UsernameReturns("some-user", expectedError)
+			})
+
+			It("returns the error", func() {
+				err := diegoSupport.WarnNoRoutes("some-app", output)
+				Expect(err).To(MatchError(expectedError))
 			})
 		})
 	})

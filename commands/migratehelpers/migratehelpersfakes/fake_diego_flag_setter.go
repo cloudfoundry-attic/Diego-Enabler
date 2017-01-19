@@ -2,6 +2,7 @@
 package migratehelpersfakes
 
 import (
+	"io"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/commands/migratehelpers"
@@ -18,6 +19,17 @@ type FakeDiegoFlagSetter struct {
 		result1 []string
 		result2 error
 	}
+	WarnNoRoutesStub        func(appName string, output io.Writer) error
+	warnNoRoutesMutex       sync.RWMutex
+	warnNoRoutesArgsForCall []struct {
+		appName string
+		output  io.Writer
+	}
+	warnNoRoutesReturns struct {
+		result1 error
+	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeDiegoFlagSetter) SetDiegoFlag(arg1 string, arg2 bool) ([]string, error) {
@@ -26,6 +38,7 @@ func (fake *FakeDiegoFlagSetter) SetDiegoFlag(arg1 string, arg2 bool) ([]string,
 		arg1 string
 		arg2 bool
 	}{arg1, arg2})
+	fake.recordInvocation("SetDiegoFlag", []interface{}{arg1, arg2})
 	fake.setDiegoFlagMutex.Unlock()
 	if fake.SetDiegoFlagStub != nil {
 		return fake.SetDiegoFlagStub(arg1, arg2)
@@ -52,6 +65,62 @@ func (fake *FakeDiegoFlagSetter) SetDiegoFlagReturns(result1 []string, result2 e
 		result1 []string
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeDiegoFlagSetter) WarnNoRoutes(appName string, output io.Writer) error {
+	fake.warnNoRoutesMutex.Lock()
+	fake.warnNoRoutesArgsForCall = append(fake.warnNoRoutesArgsForCall, struct {
+		appName string
+		output  io.Writer
+	}{appName, output})
+	fake.recordInvocation("WarnNoRoutes", []interface{}{appName, output})
+	fake.warnNoRoutesMutex.Unlock()
+	if fake.WarnNoRoutesStub != nil {
+		return fake.WarnNoRoutesStub(appName, output)
+	} else {
+		return fake.warnNoRoutesReturns.result1
+	}
+}
+
+func (fake *FakeDiegoFlagSetter) WarnNoRoutesCallCount() int {
+	fake.warnNoRoutesMutex.RLock()
+	defer fake.warnNoRoutesMutex.RUnlock()
+	return len(fake.warnNoRoutesArgsForCall)
+}
+
+func (fake *FakeDiegoFlagSetter) WarnNoRoutesArgsForCall(i int) (string, io.Writer) {
+	fake.warnNoRoutesMutex.RLock()
+	defer fake.warnNoRoutesMutex.RUnlock()
+	return fake.warnNoRoutesArgsForCall[i].appName, fake.warnNoRoutesArgsForCall[i].output
+}
+
+func (fake *FakeDiegoFlagSetter) WarnNoRoutesReturns(result1 error) {
+	fake.WarnNoRoutesStub = nil
+	fake.warnNoRoutesReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDiegoFlagSetter) Invocations() map[string][][]interface{} {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	fake.setDiegoFlagMutex.RLock()
+	defer fake.setDiegoFlagMutex.RUnlock()
+	fake.warnNoRoutesMutex.RLock()
+	defer fake.warnNoRoutesMutex.RUnlock()
+	return fake.invocations
+}
+
+func (fake *FakeDiegoFlagSetter) recordInvocation(key string, args []interface{}) {
+	fake.invocationsMutex.Lock()
+	defer fake.invocationsMutex.Unlock()
+	if fake.invocations == nil {
+		fake.invocations = map[string][][]interface{}{}
+	}
+	if fake.invocations[key] == nil {
+		fake.invocations[key] = [][]interface{}{}
+	}
+	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
 var _ migratehelpers.DiegoFlagSetter = new(FakeDiegoFlagSetter)

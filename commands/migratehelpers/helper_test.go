@@ -93,6 +93,20 @@ var _ = Describe("MigrateApps", func() {
 					Eventually(buf).Should(gbytes.Say("Error: Failed to migrate app"))
 				})
 			})
+
+			Context("when an app has no routes", func() {
+				BeforeEach(func() {
+					// error so the test doesn't wait
+					diegoSupport.SetDiegoFlagReturns(nil, errors.New("disaster"))
+				})
+
+				It("warns the user", func() {
+					Expect(diegoSupport.WarnNoRoutesCallCount()).To(Equal(1))
+					appName, output := diegoSupport.WarnNoRoutesArgsForCall(0)
+					Expect(appName).To(Equal("some-app"))
+					Expect(output).To(Equal(os.Stderr))
+				})
+			})
 		})
 	})
 })

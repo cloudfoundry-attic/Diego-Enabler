@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/diego-enabler/diegosupport"
+	models "github.com/cloudfoundry/cli/plugin/models"
 )
 
 type FakeCliConnection struct {
@@ -17,6 +18,40 @@ type FakeCliConnection struct {
 		result1 []string
 		result2 error
 	}
+	GetAppStub        func(string) (models.GetAppModel, error)
+	getAppMutex       sync.RWMutex
+	getAppArgsForCall []struct {
+		arg1 string
+	}
+	getAppReturns struct {
+		result1 models.GetAppModel
+		result2 error
+	}
+	GetCurrentSpaceStub        func() (models.Space, error)
+	getCurrentSpaceMutex       sync.RWMutex
+	getCurrentSpaceArgsForCall []struct{}
+	getCurrentSpaceReturns     struct {
+		result1 models.Space
+		result2 error
+	}
+	GetSpaceStub        func(string) (models.GetSpace_Model, error)
+	getSpaceMutex       sync.RWMutex
+	getSpaceArgsForCall []struct {
+		arg1 string
+	}
+	getSpaceReturns struct {
+		result1 models.GetSpace_Model
+		result2 error
+	}
+	UsernameStub        func() (string, error)
+	usernameMutex       sync.RWMutex
+	usernameArgsForCall []struct{}
+	usernameReturns     struct {
+		result1 string
+		result2 error
+	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeCliConnection) CliCommandWithoutTerminalOutput(args ...string) ([]string, error) {
@@ -24,6 +59,7 @@ func (fake *FakeCliConnection) CliCommandWithoutTerminalOutput(args ...string) (
 	fake.cliCommandWithoutTerminalOutputArgsForCall = append(fake.cliCommandWithoutTerminalOutputArgsForCall, struct {
 		args []string
 	}{args})
+	fake.recordInvocation("CliCommandWithoutTerminalOutput", []interface{}{args})
 	fake.cliCommandWithoutTerminalOutputMutex.Unlock()
 	if fake.CliCommandWithoutTerminalOutputStub != nil {
 		return fake.CliCommandWithoutTerminalOutputStub(args...)
@@ -50,6 +86,154 @@ func (fake *FakeCliConnection) CliCommandWithoutTerminalOutputReturns(result1 []
 		result1 []string
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeCliConnection) GetApp(arg1 string) (models.GetAppModel, error) {
+	fake.getAppMutex.Lock()
+	fake.getAppArgsForCall = append(fake.getAppArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("GetApp", []interface{}{arg1})
+	fake.getAppMutex.Unlock()
+	if fake.GetAppStub != nil {
+		return fake.GetAppStub(arg1)
+	} else {
+		return fake.getAppReturns.result1, fake.getAppReturns.result2
+	}
+}
+
+func (fake *FakeCliConnection) GetAppCallCount() int {
+	fake.getAppMutex.RLock()
+	defer fake.getAppMutex.RUnlock()
+	return len(fake.getAppArgsForCall)
+}
+
+func (fake *FakeCliConnection) GetAppArgsForCall(i int) string {
+	fake.getAppMutex.RLock()
+	defer fake.getAppMutex.RUnlock()
+	return fake.getAppArgsForCall[i].arg1
+}
+
+func (fake *FakeCliConnection) GetAppReturns(result1 models.GetAppModel, result2 error) {
+	fake.GetAppStub = nil
+	fake.getAppReturns = struct {
+		result1 models.GetAppModel
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeCliConnection) GetCurrentSpace() (models.Space, error) {
+	fake.getCurrentSpaceMutex.Lock()
+	fake.getCurrentSpaceArgsForCall = append(fake.getCurrentSpaceArgsForCall, struct{}{})
+	fake.recordInvocation("GetCurrentSpace", []interface{}{})
+	fake.getCurrentSpaceMutex.Unlock()
+	if fake.GetCurrentSpaceStub != nil {
+		return fake.GetCurrentSpaceStub()
+	} else {
+		return fake.getCurrentSpaceReturns.result1, fake.getCurrentSpaceReturns.result2
+	}
+}
+
+func (fake *FakeCliConnection) GetCurrentSpaceCallCount() int {
+	fake.getCurrentSpaceMutex.RLock()
+	defer fake.getCurrentSpaceMutex.RUnlock()
+	return len(fake.getCurrentSpaceArgsForCall)
+}
+
+func (fake *FakeCliConnection) GetCurrentSpaceReturns(result1 models.Space, result2 error) {
+	fake.GetCurrentSpaceStub = nil
+	fake.getCurrentSpaceReturns = struct {
+		result1 models.Space
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeCliConnection) GetSpace(arg1 string) (models.GetSpace_Model, error) {
+	fake.getSpaceMutex.Lock()
+	fake.getSpaceArgsForCall = append(fake.getSpaceArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("GetSpace", []interface{}{arg1})
+	fake.getSpaceMutex.Unlock()
+	if fake.GetSpaceStub != nil {
+		return fake.GetSpaceStub(arg1)
+	} else {
+		return fake.getSpaceReturns.result1, fake.getSpaceReturns.result2
+	}
+}
+
+func (fake *FakeCliConnection) GetSpaceCallCount() int {
+	fake.getSpaceMutex.RLock()
+	defer fake.getSpaceMutex.RUnlock()
+	return len(fake.getSpaceArgsForCall)
+}
+
+func (fake *FakeCliConnection) GetSpaceArgsForCall(i int) string {
+	fake.getSpaceMutex.RLock()
+	defer fake.getSpaceMutex.RUnlock()
+	return fake.getSpaceArgsForCall[i].arg1
+}
+
+func (fake *FakeCliConnection) GetSpaceReturns(result1 models.GetSpace_Model, result2 error) {
+	fake.GetSpaceStub = nil
+	fake.getSpaceReturns = struct {
+		result1 models.GetSpace_Model
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeCliConnection) Username() (string, error) {
+	fake.usernameMutex.Lock()
+	fake.usernameArgsForCall = append(fake.usernameArgsForCall, struct{}{})
+	fake.recordInvocation("Username", []interface{}{})
+	fake.usernameMutex.Unlock()
+	if fake.UsernameStub != nil {
+		return fake.UsernameStub()
+	} else {
+		return fake.usernameReturns.result1, fake.usernameReturns.result2
+	}
+}
+
+func (fake *FakeCliConnection) UsernameCallCount() int {
+	fake.usernameMutex.RLock()
+	defer fake.usernameMutex.RUnlock()
+	return len(fake.usernameArgsForCall)
+}
+
+func (fake *FakeCliConnection) UsernameReturns(result1 string, result2 error) {
+	fake.UsernameStub = nil
+	fake.usernameReturns = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeCliConnection) Invocations() map[string][][]interface{} {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	fake.cliCommandWithoutTerminalOutputMutex.RLock()
+	defer fake.cliCommandWithoutTerminalOutputMutex.RUnlock()
+	fake.getAppMutex.RLock()
+	defer fake.getAppMutex.RUnlock()
+	fake.getCurrentSpaceMutex.RLock()
+	defer fake.getCurrentSpaceMutex.RUnlock()
+	fake.getSpaceMutex.RLock()
+	defer fake.getSpaceMutex.RUnlock()
+	fake.usernameMutex.RLock()
+	defer fake.usernameMutex.RUnlock()
+	return fake.invocations
+}
+
+func (fake *FakeCliConnection) recordInvocation(key string, args []interface{}) {
+	fake.invocationsMutex.Lock()
+	defer fake.invocationsMutex.Unlock()
+	if fake.invocations == nil {
+		fake.invocations = map[string][][]interface{}{}
+	}
+	if fake.invocations[key] == nil {
+		fake.invocations[key] = [][]interface{}{}
+	}
+	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
 var _ diegosupport.CliConnection = new(FakeCliConnection)
