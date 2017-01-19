@@ -1,7 +1,6 @@
 package migratehelpers
 
 import (
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -110,7 +109,7 @@ type migrateAppFunc func(appPrinter *displayhelpers.AppPrinter, diegoSupport Die
 //go:generate counterfeiter . DiegoFlagSetter
 type DiegoFlagSetter interface {
 	SetDiegoFlag(string, bool) ([]string, error)
-	WarnNoRoutes(appName string, output io.Writer) error
+	HasRoutes(appName string) (bool, error)
 }
 
 func (cmd *MigrateApps) MigrateApp(
@@ -120,7 +119,14 @@ func (cmd *MigrateApps) MigrateApp(
 	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
 
 	if cmd.Runtime == ui.Diego {
-		diegoSupport.WarnNoRoutes(appPrinter.App.Name, os.Stderr)
+		hasRoutes, hasRoutesErr := diegoSupport.HasRoutes(appPrinter.App.Name)
+		if hasRoutesErr != nil {
+			cmd.MigrateAppsCommand.FailMigrate(appPrinter, hasRoutesErr)
+			return Err
+		}
+		if !hasRoutes {
+			cmd.MigrateAppsCommand.HealthCheckNoneWarning(appPrinter, os.Stdout)
+		}
 	}
 
 	var waitTime time.Duration

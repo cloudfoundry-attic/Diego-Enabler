@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/cloudfoundry/cli/cf/terminal"
 )
@@ -93,5 +94,17 @@ func (c *MigrateAppsCommand) FailMigrate(app ApplicationPrinter, err error) {
 		terminal.EntityNameColor(app.Organization()),
 		terminal.EntityNameColor(c.Username),
 		terminal.EntityNameColor(err.Error()),
+	)
+}
+
+func (c *MigrateAppsCommand) HealthCheckNoneWarning(app ApplicationPrinter, writer io.Writer) {
+	fmt.Fprintf(
+		writer,
+		"WARNING: Assuming health check of type process ('none') for app with no mapped routes. Use 'cf set-health-check' to change this. App %s to %s in space %s / org %s as %s\n",
+		terminal.EntityNameColor(app.Name()),
+		terminal.EntityNameColor("Diego"),
+		terminal.EntityNameColor(app.Space()),
+		terminal.EntityNameColor(app.Organization()),
+		terminal.EntityNameColor(c.Username),
 	)
 }

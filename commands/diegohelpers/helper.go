@@ -20,9 +20,11 @@ func ToggleDiegoSupport(on bool, cliConnection api.Connection, appName string) e
 		return err
 	}
 
-	err = d.WarnNoRoutes(appName, os.Stderr)
-	if err != nil {
-		return err
+	if on {
+		err = d.WarnNoRoutes(appName, os.Stdout)
+		if err != nil {
+			return err
+		}
 	}
 
 	if output, err := d.SetDiegoFlag(app.Guid, on); err != nil {

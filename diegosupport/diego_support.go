@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/plugin/models"
 )
 
@@ -65,12 +66,12 @@ func checkDiegoError(jsonRsp string) error {
 }
 
 func (d *DiegoSupport) WarnNoRoutes(appName string, output io.Writer) error {
-	app, err := d.cli.GetApp(appName)
+	hasRoutes, err := d.HasRoutes(appName)
 	if err != nil {
 		return err
 	}
 
-	if len(app.Routes) > 0 {
+	if hasRoutes {
 		return nil
 	}
 
@@ -92,7 +93,24 @@ func (d *DiegoSupport) WarnNoRoutes(appName string, output io.Writer) error {
 		return err
 	}
 
-	fmt.Fprintf(output, "WARNING: Assuming health check of type process ('none') for app with no mapped routes. Use 'cf set-health-check' to change this. App %s to Diego/DEA in space %s / org %s as %s\n", appName, space.Name, space.Organization.Name, username)
+	fmt.Fprintf(
+		output,
+		"WARNING: Assuming health check of type process ('none') for app with no mapped routes. Use 'cf set-health-check' to change this. App %s to %s in space %s / org %s as %s\n",
+		terminal.EntityNameColor(appName),
+		terminal.EntityNameColor("Diego"),
+		terminal.EntityNameColor(space.Name),
+		terminal.EntityNameColor(space.Organization.Name),
+		terminal.EntityNameColor(username),
+	)
 
 	return nil
+}
+
+func (d *DiegoSupport) HasRoutes(appName string) (bool, error) {
+	app, err := d.cli.GetApp(appName)
+	if err != nil {
+		return false, err
+	}
+
+	return len(app.Routes) > 0, nil
 }

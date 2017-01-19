@@ -41,6 +41,7 @@ func ParseRuntime(runtime string) (Runtime, error) {
 	}
 }
 
+//go:generate counterfeiter . ApplicationPrinter
 type ApplicationPrinter interface {
 	Name() string
 	Organization() string

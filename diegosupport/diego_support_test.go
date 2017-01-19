@@ -96,6 +96,53 @@ var _ = Describe("DiegoSupport", func() {
 		})
 	})
 
+	Describe("HasRoutes", func() {
+		Context("when the app has no routes", func() {
+			BeforeEach(func() {
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, nil)
+			})
+
+			It("returns false and no error", func() {
+				hasRoutes, err := diegoSupport.HasRoutes("some-app")
+				Expect(hasRoutes).To(BeFalse())
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(fakeCliConnection.GetAppCallCount()).To(Equal(1))
+				Expect(fakeCliConnection.GetAppArgsForCall(0)).To(Equal("some-app"))
+			})
+		})
+
+		Context("when the app has routes", func() {
+			BeforeEach(func() {
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{
+					Routes: []plugin_models.GetApp_RouteSummary{
+						{},
+					},
+				}, nil)
+			})
+
+			It("returns true and no error", func() {
+				hasRoutes, err := diegoSupport.HasRoutes("some-app")
+				Expect(hasRoutes).To(BeTrue())
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		Context("when an error is encountered", func() {
+			var expectedError error
+
+			BeforeEach(func() {
+				expectedError = errors.New("some-error")
+				fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, expectedError)
+			})
+
+			It("returns the error", func() {
+				_, err := diegoSupport.HasRoutes("some-app")
+				Expect(err).To(MatchError(expectedError))
+			})
+		})
+	})
+
 	Describe("WarnNoRoutes", func() {
 		var (
 			output *gbytes.Buffer
@@ -139,7 +186,7 @@ var _ = Describe("DiegoSupport", func() {
 
 				Expect(fakeCliConnection.UsernameCallCount()).To(Equal(1))
 
-				Expect(output).To(gbytes.Say("WARNING: Assuming health check of type process \\('none'\\) for app with no mapped routes. Use 'cf set-health-check' to change this. App some-app to Diego/DEA in space some-space / org some-org as some-user"))
+				Expect(output).To(gbytes.Say("WARNING: Assuming health check of type process \\('none'\\) for app with no mapped routes\\. Use 'cf set-health-check' to change this\\. App .+some-app.+ to .+Diego.+ in space .+some-space.+ / org .+some-org.+ as .+some-user.+"))
 			})
 		})
 

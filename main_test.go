@@ -210,12 +210,8 @@ var _ = Describe("DiegoEnabler", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					session.Wait()
-					Expect(session.Err).To(gbytes.Say("WARNING: Assuming health check of type process \\('none'\\) for app with no mapped routes. Use 'cf set-health-check' to change this. App test-app to Diego/DEA in space some-space / org some-org as some-user"))
-					Expect(rpcHandlers.CallCoreCommandCallCount()).To(Equal(1))
-
-					output, _ := rpcHandlers.CallCoreCommandArgsForCall(0)
-					Expect(output[1]).To(ContainSubstring("v2/apps/test-app-guid"))
-					Expect(output[5]).To(ContainSubstring(`"diego":true`))
+					// This output is colored but this assertion does not test for color. This is because the terminal package disables color when the binary is run in a non-tty session.
+					Expect(session.Out).To(gbytes.Say("WARNING: Assuming health check of type process \\('none'\\) for app with no mapped routes\\. Use 'cf set-health-check' to change this\\. App test-app to Diego in space some-space / org some-org as some-user"))
 				})
 			})
 		})
