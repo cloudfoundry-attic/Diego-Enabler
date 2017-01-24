@@ -19,21 +19,21 @@ var _ = Describe("Api", func() {
 		request *http.Request
 		err     error
 
-		cliConnection *apifakes.FakeConnection
+		fakeConnection *apifakes.FakeConnection
 	)
 
 	BeforeEach(func() {
 		baseUrl = "https://api.my-crazy-domain.com"
 		authToken = "some-auth-token"
 
-		cliConnection = new(apifakes.FakeConnection)
-		cliConnection.AccessTokenReturns(authToken, nil)
-		cliConnection.ApiEndpointReturns(baseUrl, nil)
-		cliConnection.IsLoggedInReturns(true, nil)
+		fakeConnection = new(apifakes.FakeConnection)
+		fakeConnection.AccessTokenReturns(authToken, nil)
+		fakeConnection.ApiEndpointReturns(baseUrl, nil)
+		fakeConnection.IsLoggedInReturns(true, nil)
 	})
 
 	JustBeforeEach(func() {
-		apiClient, err = NewClient(cliConnection)
+		apiClient, err = NewClient(fakeConnection)
 		Expect(err).NotTo(HaveOccurred())
 	})
 

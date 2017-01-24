@@ -119,12 +119,7 @@ func (cmd *MigrateApps) MigrateApp(
 	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
 
 	if cmd.Runtime == ui.Diego {
-		hasRoutes, hasRoutesErr := diegoSupport.HasRoutes(appPrinter.App.Name)
-		if hasRoutesErr != nil {
-			cmd.MigrateAppsCommand.FailMigrate(appPrinter, hasRoutesErr)
-			return Err
-		}
-		if !hasRoutes {
+		if !appPrinter.App.ApplicationEntity.HasRoutes {
 			cmd.MigrateAppsCommand.HealthCheckNoneWarning(appPrinter, os.Stdout)
 		}
 	}

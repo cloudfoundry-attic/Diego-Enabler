@@ -84,7 +84,7 @@ func NewAppsGetterFunc(
 	spaceName string,
 	runtime ui.Runtime,
 ) (thingdoer.AppsGetterFunc, error) {
-	diegoAppsCommand := thingdoer.AppsGetter{}
+	diegoAppsCommand := thingdoer.AppsGetter{CliConnection: cliConnection}
 
 	if orgName != "" {
 		org, err := cliConnection.GetOrg(orgName)

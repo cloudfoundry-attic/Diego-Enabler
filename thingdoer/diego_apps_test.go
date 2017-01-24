@@ -13,18 +13,17 @@ import (
 
 var _ = Describe("DiegoApps", func() {
 	var (
+		command                thingdoer.AppsGetter
 		fakePaginatedRequester *thingdoerfakes.FakePaginatedRequester
 		fakeApplicationsParser *thingdoerfakes.FakeApplicationsParser
 		apps                   models.Applications
-
-		command thingdoer.AppsGetter
-		err     error
+		err                    error
 	)
 
 	BeforeEach(func() {
+		command = thingdoer.AppsGetter{}
 		fakePaginatedRequester = new(thingdoerfakes.FakePaginatedRequester)
 		fakeApplicationsParser = new(thingdoerfakes.FakeApplicationsParser)
-		command = thingdoer.AppsGetter{}
 	})
 
 	JustBeforeEach(func() {

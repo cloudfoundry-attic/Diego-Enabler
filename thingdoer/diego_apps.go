@@ -15,6 +15,7 @@ type ApplicationsParser interface {
 type AppsGetter struct {
 	OrganizationGuid string
 	SpaceGuid        string
+	CliConnection    api.Connection
 }
 
 func (c AppsGetter) DiegoApps(

@@ -35,6 +35,7 @@ type ApplicationEntity struct {
 	//Instances            []GetApp_AppInstanceFields
 	//Routes               []GetApp_RouteSummary
 	//Services             []GetApp_ServiceSummary
+	HasRoutes bool
 }
 
 type ApplicationsResponse struct {
