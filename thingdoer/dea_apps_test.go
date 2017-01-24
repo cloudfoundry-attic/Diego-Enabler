@@ -199,7 +199,7 @@ var _ = Describe("DeaApps", func() {
 					})
 
 					It("returns a getting routes error", func() {
-						Expect(err).To(MatchError("Error getting routes for app 'app-1': getting routes error"))
+						Expect(err).To(MatchError("Unable to get routes for app 'app-1'\ngetting routes error"))
 					})
 				})
 			})
@@ -303,10 +303,9 @@ var _ = Describe("DeaApps", func() {
 
 			It("returns a cloud controller error", func() {
 				_, err := command.ApplicationHasRoutes("some-app-guid")
-				Expect(err).To(MatchError(`Cloud controller error:
-Code:          10000
-Description:   Unknown request
-Error Code:    CF-NotFound`))
+				Expect(err).To(MatchError(`CC code:       10000
+CC error code: CF-NotFound
+Description:   Unknown request`))
 			})
 		})
 	})

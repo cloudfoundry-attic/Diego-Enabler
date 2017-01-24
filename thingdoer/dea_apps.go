@@ -10,19 +10,25 @@ import (
 	"github.com/cloudfoundry-incubator/diego-enabler/models"
 )
 
-func handleCCError(ccErrResponse string) error {
-	var ccErr struct {
-		Code        int    `json:"code"`
-		Description string `json:"description"`
-		ErrorCode   string `json:"error_code"`
-	}
+type ccError struct {
+	Code        int    `json:"code"`
+	Description string `json:"description"`
+	ErrorCode   string `json:"error_code"`
+}
 
+func (e ccError) Error() string {
+	return fmt.Sprintf("CC code:       %d\nCC error code: %s\nDescription:   %s",
+		e.Code, e.ErrorCode, e.Description)
+}
+
+func handleCCError(ccErrResponse string) error {
+	ccErr := ccError{}
 	err := json.Unmarshal([]byte(ccErrResponse), &ccErr)
 	if err != nil {
 		return fmt.Errorf("Unexpected response:\n%s", ccErrResponse)
 	}
 
-	return fmt.Errorf("Cloud controller error:\nCode:          %d\nDescription:   %s\nError Code:    %s", ccErr.Code, ccErr.Description, ccErr.ErrorCode)
+	return ccErr
 }
 
 func (c AppsGetter) ApplicationHasRoutes(appGUID string) (bool, error) {
@@ -97,7 +103,7 @@ func (c AppsGetter) DeaApps(appsParser ApplicationsParser, paginatedRequester Pa
 	for i, app := range applications {
 		hasRoutes, err := c.ApplicationHasRoutes(app.Guid)
 		if err != nil {
-			return noApps, fmt.Errorf("Error getting routes for app '%s': %s", app.Name, err.Error())
+			return noApps, fmt.Errorf("Unable to get routes for app '%s'\n%s", app.Name, err.Error())
 		}
 
 		applications[i].HasRoutes = hasRoutes
