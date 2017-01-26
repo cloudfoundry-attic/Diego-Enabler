@@ -18,8 +18,9 @@ import (
 
 const (
 	Success = iota
-	Warning
+	FailWarning
 	Err
+	OKWarning
 )
 
 type MigrateApps struct {
@@ -76,8 +77,8 @@ func (cmd *MigrateApps) Execute(cliConnection api.Connection) error {
 		spaceMap[space.Guid] = space
 	}
 
-	warnings, errors := cmd.migrateApps(cliConnection, apps, spaceMap, cmd.MaxInFlight)
-	cmd.MigrateAppsCommand.AfterAll(len(apps), warnings, errors)
+	okWarnings, failWarnings, errors := cmd.migrateApps(cliConnection, apps, spaceMap, cmd.MaxInFlight)
+	cmd.MigrateAppsCommand.AfterAll(len(apps), okWarnings, failWarnings, errors)
 
 	return nil
 }
@@ -116,13 +117,9 @@ func (cmd *MigrateApps) MigrateApp(
 	appPrinter *displayhelpers.AppPrinter,
 	diegoSupport DiegoFlagSetter,
 ) int {
-	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
+	status := Success
 
-	if cmd.Runtime == ui.Diego {
-		if !appPrinter.App.ApplicationEntity.HasRoutes {
-			cmd.MigrateAppsCommand.HealthCheckNoneWarning(appPrinter, os.Stdout)
-		}
-	}
+	cmd.MigrateAppsCommand.BeforeEach(appPrinter)
 
 	var waitTime time.Duration
 	if appPrinter.App.State == models.Started {
@@ -141,29 +138,41 @@ func (cmd *MigrateApps) MigrateApp(
 	if err != nil {
 		if strings.Contains(err.Error(), "NotAuthorized") {
 			cmd.MigrateAppsCommand.UserWarning(appPrinter)
-			return Warning
+			return FailWarning
 		} else {
 			cmd.MigrateAppsCommand.FailMigrate(appPrinter, err)
 			return Err
 		}
 	}
 
+	if cmd.Runtime == ui.Diego && !appPrinter.App.ApplicationEntity.HasRoutes {
+		cmd.MigrateAppsCommand.HealthCheckNoneWarning(appPrinter, os.Stdout)
+		status = OKWarning
+	}
+
 	printDot := time.NewTicker(5 * time.Second)
+	done := make(chan bool)
 	go func() {
-		for range printDot.C {
-			cmd.MigrateAppsCommand.DuringEach(appPrinter)
+		for {
+			select {
+			case <-printDot.C:
+				cmd.MigrateAppsCommand.DuringEach()
+			case <-done:
+				return
+			}
 		}
 	}()
 
 	time.Sleep(waitTime)
+	done <- true
 	printDot.Stop()
 
 	cmd.MigrateAppsCommand.CompletedEach(appPrinter)
 
-	return Success
+	return status
 }
 
-func (cmd *MigrateApps) migrateApps(cliConnection api.Connection, apps models.Applications, spaceMap map[string]models.Space, maxInFlight int) (int, int) {
+func (cmd *MigrateApps) migrateApps(cliConnection api.Connection, apps models.Applications, spaceMap map[string]models.Space, maxInFlight int) (int, int, int) {
 	if len(apps) < maxInFlight {
 		maxInFlight = len(apps)
 	}
@@ -220,18 +229,21 @@ func processAppsChan(
 	return output, &waitDone
 }
 
-func outputAppsChan(outputsChan chan int) (int, int) {
-	warnings := 0
+func outputAppsChan(outputsChan chan int) (int, int, int) {
+	okWarnings := 0
+	failWarnings := 0
 	errors := 0
 
 	for result := range outputsChan {
 		switch result {
-		case Warning:
-			warnings++
+		case OKWarning:
+			okWarnings++
+		case FailWarning:
+			failWarnings++
 		case Err:
 			errors++
 		default:
 		}
 	}
-	return warnings, errors
+	return okWarnings, failWarnings, errors
 }

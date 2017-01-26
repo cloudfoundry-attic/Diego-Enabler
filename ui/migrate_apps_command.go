@@ -64,12 +64,13 @@ func (c *MigrateAppsCommand) CompletedEach(app ApplicationPrinter) {
 	)
 }
 
-func (c *MigrateAppsCommand) DuringEach(app ApplicationPrinter) {
+func (c *MigrateAppsCommand) DuringEach() {
 	fmt.Print(".")
 }
 
-func (c *MigrateAppsCommand) AfterAll(attempts, warnings int, errors int) {
-	successes := attempts - warnings - errors
+func (c *MigrateAppsCommand) AfterAll(attempts int, okWarnings int, failWarnings int, errors int) {
+	successes := attempts - failWarnings - errors
+	warnings := okWarnings + failWarnings
 	fmt.Println()
 	fmt.Printf("Migration to %s completed: %d apps, %d errors, %d warnings\n", terminal.EntityNameColor(c.Runtime.String()), successes, errors, warnings)
 }
