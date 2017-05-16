@@ -86,10 +86,12 @@ var _ = Describe("PaginatedRequester", func() {
 		It("should make a request", func() {
 			Expect(fakeCloudControllerClient.DoCallCount()).To(Equal(1))
 
-			expectedRequest, err := http.NewRequest("GET", "something", strings.NewReader(""))
+			_, err := http.NewRequest("GET", "something", strings.NewReader(""))
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(fakeCloudControllerClient.DoArgsForCall(0)).To(Equal(expectedRequest))
+			actualRequest := fakeCloudControllerClient.DoArgsForCall(0)
+			Expect(actualRequest.Method).To(Equal("GET"))
+			Expect(actualRequest.URL.Path).To(Equal("something"))
 		})
 
 		Context("when making the request fails", func() {
