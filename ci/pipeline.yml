@@ -25,7 +25,7 @@ jobs:
     - task: build
       config:
         platform: linux
-        image: docker:///cloudfoundry/cli-ci
+        rootfs_uri: docker:///cloudfoundry/cli-ci
         inputs:
         - name: diego-enabler
           path: gopath/src/github.com/cloudfoundry-incubator/diego-enabler
@@ -55,7 +55,7 @@ jobs:
     - task: units
       config:
         platform: linux
-        image: docker:///cloudfoundry/cli-ci
+        rootfs_uri: docker:///cloudfoundry/cli-ci
         inputs:
         - name: diego-enabler
           path: gopath/src/github.com/cloudfoundry-incubator/diego-enabler
