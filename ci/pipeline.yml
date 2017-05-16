@@ -3,7 +3,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry-incubator/diego-enabler
-    private_key: {{cf-cli-eng-github-private-key}}
+    private_key: {{diego_enabler_github_private_key}}
     branch: master
 
 - name: diego-enabler-draft-release
