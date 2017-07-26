@@ -56,6 +56,12 @@ jobs:
 
             cp $GOPATH/src/github.com/cloudfoundry-incubator/diego-enabler/out/* diego-enabler-releases
 
+            RELEASES=diego-enabler-releases/*
+            for r in $RELEASES
+            do
+              sha1sum $r
+            done
+
     - task: units
       config:
         platform: linux
